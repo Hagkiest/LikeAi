@@ -1,16 +1,7 @@
 {
-  "name": "like-ai",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
     "axios": "^1.6.2"
   }
 } 

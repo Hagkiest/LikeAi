@@ -1,8 +1,6 @@
 from flask import Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 import requests
-import json
-import os
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS
@@ -20,54 +18,22 @@ def static_files(path):
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
+        # 从请求中获取数据
         data = request.json
         
-        # 构建讯飞API所需的请求格式
-        payload = {
-            "header": {
-                "app_id": os.environ.get('XF_APP_ID'),
-                "uid": "12345"
-            },
-            "parameter": {
-                "chat": {
-                    "domain": "general",
-                    "temperature": 0.5,
-                    "max_tokens": 2048
-                }
-            },
-            "payload": {
-                "message": {
-                    "text": data['messages']
-                }
-            }
-        }
-        
-        # 发送请求到讯飞API
+        # 转发请求到讯飞API
         response = requests.post(
-            'https://spark-api.xf-yun.com/v2.1/chat',
+            'https://spark-api-open.xf-yun.com/v1/chat/completions',
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {os.environ.get("XF_API_KEY")}'
+                'Authorization': 'Bearer FlNLoixiykbsGXdAemOC:rkRUvDmPbNJPBaHboopD'
             },
-            json=payload
+            json=data
         )
         
-        # 解析响应
-        result = response.json()
-        
-        # 转换为前端期望的格式
-        return jsonify({
-            'code': 0,
-            'choices': [{
-                'message': {
-                    'content': result.get('payload', {}).get('text', '抱歉，我暂时无法回答。')
-                }
-            }]
-        })
-        
+        return jsonify(response.json())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Vercel 需要的入口函数
-def handler(event, context):
-    return app(event, context) 
+if __name__ == '__main__':
+    app.run(port=3000, debug=True) 

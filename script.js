@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 重命名功能
             menu.querySelector('.rename').addEventListener('click', function() {
-                const newTitle = prompt('请输入新的对话名称:', element.querySelector('span').textContent);
+                const newTitle = prompt('请输入新的对��名称:', element.querySelector('span').textContent);
                 if (newTitle) {
                     element.querySelector('span').textContent = newTitle;
                     saveConversation(element.dataset.id, newTitle, getCurrentMessages());
@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 确保代码块有语言标识
         language = language || 'plaintext';
         try {
-            // 使用 highlight.js 进行代码高亮
+            // 使用 highlight.js ��行代码高亮
             const highlighted = hljs.highlight(code, {
                 language: language,
                 ignoreIllegals: true
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // 修��加载保存的对话函数
+    // 修改加载保存的对话函数
     function loadSavedConversations() {
         if (checkCookieConsent()) {
             const conversations = loadConversations();
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userDropdown.remove();
         }
 
-        // ���建新的下拉菜单
+        // 建新的下拉菜单
         userDropdown = createUserDropdown();
         document.body.appendChild(userDropdown);
         
@@ -652,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 添加自动保存功能
     function setupAutoSave() {
-        // 清除之前��定时器
+        // 清除之前定时器
         if (autoSaveTimer) {
             clearInterval(autoSaveTimer);
         }

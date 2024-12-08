@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LikeXF - 套餐价格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 40px 20px;
+        }
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .pricing-header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .pricing-header p {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .pricing-table {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .pricing-card.popular {
+            border: 2px solid #1a8cff;
+            position: relative;
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a8cff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .plan-price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1a8cff;
+            margin: 20px 0;
+        }
+
+        .plan-price small {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list .check {
+            color: #00b96b;
+            margin-right: 10px;
+        }
+
+        .feature-list .cross {
+            color: #ff4d4f;
+            margin-right: 10px;
+        }
+
+        .buy-button {
+            background: #1a8cff;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .buy-button:hover {
+            background: #0066cc;
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-table {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pricing-table {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .activation-section {
+            max-width: 400px;
+            margin: 40px auto;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .activation-status {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .activation-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .activation-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .activation-input button {
+            padding: 10px 20px;
+            background: #1a8cff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .activation-input button:hover {
+            background: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="pricing-container">
+        <div class="pricing-header">
+            <h1>选择适合您的套餐</h1>
+            <p>为您的需求找到完美的解决方案</p>
+        </div>
+
+        <div class="pricing-table">
+            <!-- 试用版 -->
+            <div class="pricing-card">
+                <div class="plan-name">试用版</div>
+                <div class="plan-price">免费<small>/永久</small></div>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> 基础AI对话(每天3条)</li>
+                    <li><span class="cross">×</span> 数据云存储</li>
+                    <li><span class="cross">×</span> 定制大模型</li>
+                    <li><span class="cross">×</span> 基础大模型</li>
+                    <li><span class="cross">×</span> 高级大模型</li>
+                    <li><span class="cross">×</span> 优先响应速度</li>
+                    <li><span class="cross">×</span> 24/7技术支持</li>
+                    <li><span class="cross">×</span> 本地大模型</li>
+                    <li><span class="cross">×</span> 文件/链接聊天</li>
+                </ul>
+                <button class="buy-button" onclick="alert('您已经在使用试用版')">当前版本</button>
+            </div>
+
+            <!-- 个人版 -->
+            <div class="pricing-card">
+                <div class="plan-name">个人版</div>
+                <div class="plan-price">
+                    ¥29.9
+                    <small>/月</small>
+                </div>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> AI对话无限制</li>
+                    <li><span class="check">✓</span> 数据云存储</li>
+                    <li><span class="cross">×</span> 定制大模型</li>
+                    <li><span class="check">✓</span> 基础大模型</li>
+                    <li><span class="cross">×</span> 高级大模型</li>
+                    <li><span class="check">✓</span> 优先响应速度</li>
+                    <li><span class="cross">×</span> 24/7技术支持</li>
+                    <li><span class="cross">×</span> 本地大模型</li>
+                    <li><span class="cross">×</span> 文件/链接聊天</li>
+                </ul>
+                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
+            </div>
+
+            <!-- 专业版 -->
+            <div class="pricing-card popular">
+                <div class="popular-badge">最受欢迎</div>
+                <div class="plan-name">专业版</div>
+                <div class="plan-price">
+                    ¥35.9
+                    <small>/月</small>
+                </div>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> AI对话无限制</li>
+                    <li><span class="check">✓</span> 数据云存储</li>
+                    <li><span class="cross">×</span> 定制大模型</li>
+                    <li><span class="check">✓</span> 基础大模型</li>
+                    <li><span class="check">✓</span> 高级大模型</li>
+                    <li><span class="check">✓</span> 优先响应速度</li>
+                    <li><span class="cross">×</span> 24/7技术支持</li>
+                    <li><span class="cross">×</span> 本地大模型</li>
+                    <li><span class="cross">×</span> 文件/链接聊天</li>
+                </ul>
+                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
+            </div>
+
+            <!-- 桌面版 -->
+            <div class="pricing-card">
+                <div class="plan-name">桌面版(含VIP)</div>
+                <div class="plan-price">
+                    ¥59.9
+                    <small>/月</small>
+                </div>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> AI对话无限制</li>
+                    <li><span class="check">✓</span> 数据云存储</li>
+                    <li><span class="check">✓</span> 定制大模型(VIP)</li>
+                    <li><span class="check">✓</span> 基础大模型</li>
+                    <li><span class="check">✓</span> 高级大模型(VIP)</li>
+                    <li><span class="check">✓</span> 优先响应速度(VIP)</li>
+                    <li><span class="check">✓</span> 24/7技术支持</li>
+                    <li><span class="check">✓</span> 本地大模型(VIP)</li>
+                    <li><span class="check">✓</span> 文件/链接聊天</li>
+                </ul>
+                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
+            </div>
+        </div>
+
+        <!-- 添加激活码输入区域 -->
+        <div class="activation-section">
+            <div class="activation-status" id="activationStatus">
+                <!-- 这里显示激活状态或到期时间 -->
+            </div>
+            <div class="activation-input">
+                <input type="text" id="activationCode" placeholder="请输入激活码">
+                <button onclick="activateCode()">激活</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加激活码处理脚本 -->
+    <script>
+    // 检查激活状态
+    function checkActivation() {
+        const activation = localStorage.getItem('activation');
+        if (activation) {
+            const data = JSON.parse(activation);
+            const now = new Date().getTime();
+            if (now < data.expireTime) {
+                const expireDate = new Date(data.expireTime).toLocaleDateString();
+                document.getElementById('activationStatus').innerHTML = 
+                    `当前版本: ${data.version}<br>到期时间: ${expireDate}`;
+                return true;
+            }
+        }
+        document.getElementById('activationStatus').textContent = '当前未激活任何付费版本';
+        return false;
+    }
+
+    // 激活码处理
+    function activateCode() {
+        const code = document.getElementById('activationCode').value.trim();
+        if (!code) {
+            alert('请输入激活码');
+            return;
+        }
+
+        // 这里应该是向服务器验证激活码
+        // 示例中使用模拟数据
+        const mockActivation = {
+            'PERSONAL2024': { version: '个人版', days: 30 },
+            'PRO2024': { version: '专业版', days: 30 },
+            'DESKTOP2024': { version: '桌面版', days: 36500 } // 约100年，相当于永久
+        };
+
+        const activation = mockActivation[code];
+        if (activation) {
+            const now = new Date().getTime();
+            const expireTime = now + (activation.days * 24 * 60 * 60 * 1000);
+            localStorage.setItem('activation', JSON.stringify({
+                version: activation.version,
+                expireTime: expireTime
+            }));
+            checkActivation();
+            alert('激活成功！');
+        } else {
+            alert('无效的激活码');
+        }
+    }
+
+    // 初始化检查激活状态
+    document.addEventListener('DOMContentLoaded', checkActivation);
+    </script>
+</body>
+</html> 

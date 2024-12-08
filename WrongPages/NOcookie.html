@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="LikeAI, Cookie设置, AI助手">
+    <meta name="description" content="LikeAI的Cookie设置页面">
+    <title>LikeAI - Cookie设置</title>
+    <link rel="icon" href="/images/logo.ico" type="image/x-icon">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 64px;
+            margin-bottom: 1rem;
+        }
+
+        .icon-fallback {
+            display: none;
+            font-size: 32px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .icon:empty {
+            display: none;
+        }
+
+        .icon:empty + .icon-fallback {
+            display: block;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .button {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .primary:hover {
+            background-color: #45a049;
+        }
+
+        .secondary {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .secondary:hover {
+            background-color: #e8e8e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <img src="/images/cookies.png" alt="Cookie" style="width: 48px; height: 48px;">
+        </div>
+        <div class="icon-fallback">Cookie</div>
+        <h1>需要启用Cookie</h1>
+        <p>
+            很抱歉，我们需要使用Cookie来为您提供更好的服务体验。
+            Cookie帮助我们保存您的对话记录和登录状态���这对于网站的正常运行是必需的。
+            如果您改变主意了，可以点击下方按钮重新选择。
+        </p>
+        <div class="buttons">
+            <button class="button primary" onclick="window.location.href='/'">重新选择</button>
+            <button class="button secondary" onclick="window.location.href='/index.html'">返回主页</button>
+        </div>
+    </div>
+
+    <script>
+        // 当用户点击"重新选择"时，返回主页并重新显示cookie提示
+        document.querySelector('.primary').addEventListener('click', function() {
+            localStorage.removeItem('cookieConsent'); // 清除cookie选择状态
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html> 

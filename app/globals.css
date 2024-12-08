@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 从原styles.css迁移的自定义样式 */
+@layer components {
+  .app-container {
+    @apply flex h-screen bg-white;
+  }
+
+  .sidebar {
+    @apply w-64 border-r flex flex-col;
+  }
+
+  .chat-container {
+    @apply flex-1 flex flex-col;
+  }
+
+  .message {
+    @apply flex gap-3 p-4;
+  }
+
+  .user-message {
+    @apply justify-end;
+  }
+
+  .assistant-message {
+    @apply justify-start;
+  }
+
+  .message-avatar {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-white;
+  }
+
+  .user-message .message-avatar {
+    @apply bg-blue-500;
+  }
+
+  .assistant-message .message-avatar {
+    @apply bg-green-500;
+  }
+
+  .message-content {
+    @apply max-w-[70%] rounded-lg p-3;
+  }
+
+  .user-message .message-content {
+    @apply bg-blue-500 text-white;
+  }
+
+  .assistant-message .message-content {
+    @apply bg-gray-100;
+  }
+
+  .cookie-consent {
+    @apply fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center;
+  }
+} 

@@ -6,7 +6,7 @@
     <meta name="keywords" content="LikeAI, AI聊天, 人工智能对话, AI助手, 智能问答, AI模型, LikeXF">
     <meta name="description" content="LikeAI是一个智能AI聊天助手，提供智能对话、文本生成、代码编写、数学解答等多功能服务。">
     <title>LikeAI - 智能AI助手</title>
-    <link rel="icon" href="/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="/images/image.jpg" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -52,8 +52,14 @@
             </div>
             <!-- 原有的聊天界面内容 -->
             <div class="model-selector">
-                <span class="model-name">LikeXF</span>
-                <button class="model-dropdown">▼</button>
+                <span class="model-name">讯飞星火</span>
+                <button class="model-dropdown" id="modelDropdown">▼</button>
+                <div class="model-menu" id="modelMenu">
+                    <div class="model-option selected">讯飞星火</div>
+                    <!-- 未来可以在这里添加更多模型选项 -->
+                </div>
+                <!-- 添加更新说明链接 -->
+                <span class="update-link" id="updateLink">v1.6.2</span>
                 <div class="user-menu">
                     <div class="user-avatar" id="userAvatar">我</div>
                 </div>
@@ -64,7 +70,7 @@
                 </div>
                 
                 <div class="chat-input-container">
-                    <input type="text" class="chat-input" placeholder="给'星火-3.5'发送消息" id="messageInput">
+                    <textarea class="chat-input" placeholder="给'星火-3.5'发送消息" id="messageInput"></textarea>
                     <button class="send-button" id="sendButton">↑</button>
                 </div>
             </div>
@@ -94,5 +100,14 @@
             window.location.href = '/Wrongpages/NOcookie.html';
         });
     </script>
+    <!-- 添加更新说明弹窗 -->
+    <div class="update-modal" id="updateModal">
+        <div class="update-modal-content">
+            <h2>v1.6.2更新说明</h2>
+            <p>    本次更新改善了聊天的保存机制，修改了部分ai输出的渲染机制，同时加强了大模型版本，使用讯飞星火付费大模型，并将游客聊天免费次数从5改为7。未来将会增加更多大模型供大家选择！</p>
+            <button class="close-modal" id="closeModal">×</button>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modalOverlay"></div>
 </body>
 </html> 

@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 添加点击事件
         addConversationClickHandler(newConversationItem);
+
+        hasShownContextLimitWarning = false;
     }
 
     // 添加右键菜单
@@ -127,15 +129,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 获取当前消息列表
+    // 添加上下文限制配置
+    const CONTEXT_LIMITS = {
+        guest: {
+            free: 0,        // 游客试用版不支持上下文
+            paid: 1024      // 游客付费版支持1024字上��文
+        },
+        user: 4096         // 登录用户支持4096字上下文
+    };
+
+    // 添加提醒标记
+    let hasShownContextLimitWarning = false;
+
+    // 修改获取当前消息列表函数
     function getCurrentMessages() {
         const messages = [];
-        chatMessages.querySelectorAll('.message').forEach(msg => {
-            messages.push({
-                text: msg.querySelector('.message-text').textContent,
-                sender: msg.classList.contains('user-message') ? 'user' : 'assistant'
-            });
-        });
+        const username = localStorage.getItem('username');
+        const activation = JSON.parse(localStorage.getItem('activation') || '{}');
+        let contextLimit = 0;
+        
+        // 确定上下文限制
+        if (username === 'guest') {
+            contextLimit = activation.version ? CONTEXT_LIMITS.guest.paid : CONTEXT_LIMITS.guest.free;
+        } else {
+            contextLimit = CONTEXT_LIMITS.user;
+        }
+
+        // 获取所有消息
+        const allMessages = Array.from(chatMessages.querySelectorAll('.message')).map(msg => ({
+            text: msg.querySelector('.message-text').textContent,
+            sender: msg.classList.contains('user-message') ? 'user' : 'assistant'
+        }));
+
+        // 如果不支持上下文，只返回最新的消息
+        if (contextLimit === 0) {
+            if (allMessages.length > 0) {
+                return [allMessages[allMessages.length - 1]];
+            }
+            return [];
+        }
+
+        // 计算上下文总长度并收集消息
+        let totalLength = 0;
+        for (let i = allMessages.length - 1; i >= 0; i--) {
+            const messageLength = allMessages[i].text.length;
+            if (totalLength + messageLength <= contextLimit) {
+                messages.unshift(allMessages[i]);
+                totalLength += messageLength;
+            } else {
+                break;
+            }
+        }
+
         return messages;
     }
 
@@ -344,11 +389,19 @@ document.addEventListener('DOMContentLoaded', function() {
             messageInput.value = '';
 
             try {
-                // 获取当前对话的所有消息
+                // 获取当前对话的消息（带上下文限制）
                 const messages = getCurrentMessages().map(msg => ({
                     role: msg.sender === 'user' ? 'user' : 'assistant',
                     content: msg.text
                 }));
+
+                // 如果是游客试用版且还没显示过提醒，则显示提醒
+                if (localStorage.getItem('username') === 'guest' && 
+                    !JSON.parse(localStorage.getItem('activation') || '{}').version && 
+                    !hasShownContextLimitWarning) {
+                    addMessage('注意：试用版不支持上下文对话功能。如需使用上下文功能，请升级到付费版本。', 'assistant');
+                    hasShownContextLimitWarning = true;
+                }
 
                 // 发送到AI并获取响应
                 await sendToAI(messages);
@@ -481,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // 修��加载保存的对话函数
+    // 修改加载保存的对话函数
     function loadSavedConversations() {
         if (checkCookieConsent()) {
             const conversations = loadConversations();
@@ -614,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userDropdown.remove();
         }
 
-        // ���建新的下拉菜单
+        // 建新的下拉菜单
         userDropdown = createUserDropdown();
         document.body.appendChild(userDropdown);
         
@@ -652,7 +705,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 添加自动保存功能
     function setupAutoSave() {
-        // 清除之前��定时器
+        // 清除之前定时器
         if (autoSaveTimer) {
             clearInterval(autoSaveTimer);
         }
@@ -759,7 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(popup);
         
-        // 2.5秒后自动移除弹窗
+        // 2.5秒后��动移除弹窗
         setTimeout(() => {
             popup.remove();
             style.remove();
@@ -773,4 +826,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 初始状态设置
     sendButton.disabled = true;
+
+    // 模型选择功能
+    const modelDropdown = document.getElementById('modelDropdown');
+    const modelMenu = document.getElementById('modelMenu');
+
+    modelDropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        modelMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+        modelMenu.classList.remove('show');
+    });
+
+    // 更新说明弹窗功能
+    const updateLink = document.getElementById('updateLink');
+    const updateModal = document.getElementById('updateModal');
+    const closeModal = document.getElementById('closeModal');
+
+    updateLink.addEventListener('click', function() {
+        updateModal.style.display = 'flex';
+    });
+
+    closeModal.addEventListener('click', function() {
+        updateModal.style.display = 'none';
+    });
+
+    updateModal.addEventListener('click', function(e) {
+        if (e.target === updateModal) {
+            updateModal.style.display = 'none';
+        }
+    });
+
+    // 输入框换行支持
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const value = this.value;
+            
+            this.value = value.substring(0, start) + '\n' + value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+            
+            // 调整输入框高度
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // 输入框自动调整高度
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        // 限制最大高度
+        if (this.scrollHeight > 200) {
+            this.style.height = '200px';
+            this.style.overflowY = 'auto';
+        }
+    });
+
+    // 修改模型选择功能
+    const modalOverlay = document.getElementById('modalOverlay');
+
+    modelDropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        modelMenu.classList.toggle('show');
+        modalOverlay.classList.toggle('show');
+    });
+
+    // 点击遮罩层关闭菜单
+    modalOverlay.addEventListener('click', function() {
+        modelMenu.classList.remove('show');
+        modalOverlay.classList.remove('show');
+    });
+
+    // 修改原有的点击事件监听器
+    document.addEventListener('click', function(e) {
+        if (!modelMenu.contains(e.target) && !modelDropdown.contains(e.target)) {
+            modelMenu.classList.remove('show');
+            modalOverlay.classList.remove('show');
+        }
+    });
 }); 

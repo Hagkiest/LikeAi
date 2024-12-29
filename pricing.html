@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+    <link rel="icon" href="/images/image.jpg" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LikeXF - 套餐价格</title>
+    <title>LikeAI - 积分说明</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f5;
@@ -186,163 +187,286 @@
         .activation-input button:hover {
             background: #0066cc;
         }
+
+        .points-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 800px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .points-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .points-section {
+            margin: 20px 0;
+        }
+
+        .points-type {
+            font-size: 18px;
+            color: #1a8cff;
+            margin-bottom: 10px;
+        }
+
+        .points-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .points-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .points-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .highlight {
+            color: #ff4d4f;
+            font-weight: bold;
+        }
+
+        .activation-input-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .activation-input-container input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .activation-input-container input:focus {
+            border-color: #1a8cff;
+        }
+        
+        .activation-input-container button {
+            padding: 12px 24px;
+            background: #1a8cff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .activation-input-container button:hover {
+            background: #0066cc;
+        }
+        
+        .activation-status {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid #eee;
+            z-index: 1000;
+        }
+
+        .footer a {
+            color: #1a8cff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .app-container, .login-container, .pricing-container, .convert-container {
+            margin-bottom: 80px;
+        }
     </style>
 </head>
 <body>
     <div class="pricing-container">
         <div class="pricing-header">
-            <h1>选择适合您的套餐</h1>
-            <p>为您的需求找到完美的解决方案</p>
+            <h1>积分系统说明</h1>
+            <p>通过签到获取积分，享受AI对话服务</p>
         </div>
 
-        <div class="pricing-table">
-            <!-- 试用版 -->
-            <div class="pricing-card">
-                <div class="plan-name">试用版</div>
-                <div class="plan-price">免费<small>/永久</small></div>
-                <ul class="feature-list">
-                    <li><span class="check">✓</span> 基础AI对话(每天3条)</li>
-                    <li><span class="cross">×</span> 数据云存储</li>
-                    <li><span class="cross">×</span> 定制大模型</li>
-                    <li><span class="cross">×</span> 基础大模型</li>
-                    <li><span class="cross">×</span> 高级大模型</li>
-                    <li><span class="cross">×</span> 优先响应速度</li>
-                    <li><span class="cross">×</span> 24/7技术支持</li>
-                    <li><span class="cross">×</span> 本地大模型</li>
-                    <li><span class="cross">×</span> 文件/链接聊天</li>
+        <div class="points-card">
+            <div class="points-section">
+                <div class="points-type">积分类型</div>
+                <ul class="points-list">
+                    <li>基础积分：用于普通对话，每次对话消耗3积分</li>
+                    <li>高级积分：用于特殊功能（即将开放）</li>
                 </ul>
-                <button class="buy-button" onclick="alert('您已经在使用试用版')">当前版本</button>
             </div>
 
-            <!-- 个人版 -->
-            <div class="pricing-card">
-                <div class="plan-name">个人版</div>
-                <div class="plan-price">
-                    ¥29.9
-                    <small>/月</small>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="check">✓</span> AI对话无限制</li>
-                    <li><span class="check">✓</span> 数据云存储</li>
-                    <li><span class="cross">×</span> 定制大模型</li>
-                    <li><span class="check">✓</span> 基础大模型</li>
-                    <li><span class="cross">×</span> 高级大模型</li>
-                    <li><span class="check">✓</span> 优先响应速度</li>
-                    <li><span class="cross">×</span> 24/7技术支持</li>
-                    <li><span class="cross">×</span> 本地大模型</li>
-                    <li><span class="cross">×</span> 文件/链接聊天</li>
+            <div class="points-section">
+                <div class="points-type">获取方式</div>
+                <ul class="points-list">
+                    <li>新用户注册：赠送10个基础积分 + 1个高级积分</li>
+                    <li>每日签到：获得6个基础积分 + 2个高级积分</li>
+                    <li>特殊活动：不定期举办积分赠送活动</li>
                 </ul>
-                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
             </div>
 
-            <!-- 专业版 -->
-            <div class="pricing-card popular">
-                <div class="popular-badge">最受欢迎</div>
-                <div class="plan-name">专业版</div>
-                <div class="plan-price">
-                    ¥35.9
-                    <small>/月</small>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="check">✓</span> AI对话无限制</li>
-                    <li><span class="check">✓</span> 数据云存储</li>
-                    <li><span class="cross">×</span> 定制大模型</li>
-                    <li><span class="check">✓</span> 基础大模型</li>
-                    <li><span class="check">✓</span> 高级大模型</li>
-                    <li><span class="check">✓</span> 优先响应速度</li>
-                    <li><span class="cross">×</span> 24/7技术支持</li>
-                    <li><span class="cross">×</span> 本地大模型</li>
-                    <li><span class="cross">×</span> 文件/链接聊天</li>
+            <div class="points-section">
+                <div class="points-type">使用规则</div>
+                <ul class="points-list">
+                    <li>每次AI对话消耗3个基础积分</li>
+                    <li>积分不足时将无法继续对话</li>
+                    <li>管理员账号不受积分限制</li>
+                    <li>积分有效期：永久有效</li>
                 </ul>
-                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
-            </div>
-
-            <!-- 桌面版 -->
-            <div class="pricing-card">
-                <div class="plan-name">桌面版(含VIP)</div>
-                <div class="plan-price">
-                    ¥59.9
-                    <small>/月</small>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="check">✓</span> AI对话无限制</li>
-                    <li><span class="check">✓</span> 数据云存储</li>
-                    <li><span class="check">✓</span> 定制大模型(VIP)</li>
-                    <li><span class="check">✓</span> 基础大模型</li>
-                    <li><span class="check">✓</span> 高级大模型(VIP)</li>
-                    <li><span class="check">✓</span> 优先响应速度(VIP)</li>
-                    <li><span class="check">✓</span> 24/7技术支持</li>
-                    <li><span class="check">✓</span> 本地大模型(VIP)</li>
-                    <li><span class="check">✓</span> 文件/链接聊天</li>
-                </ul>
-                <button class="buy-button" onclick="showActivationInput()">立即购买</button>
             </div>
         </div>
 
-        <!-- 添加激活码输入区域 -->
-        <div class="activation-section">
-            <div class="activation-status" id="activationStatus">
-                <!-- 这里显示激活状态或到期时间 -->
-            </div>
-            <div class="activation-input">
-                <input type="text" id="activationCode" placeholder="请输入激活码">
-                <button onclick="activateCode()">激活</button>
+        <div class="points-card">
+            <div class="points-section">
+                <div class="points-type">激活工具</div>
+                <div class="activation-input-container">
+                    <input type="text" id="activationCode" placeholder="请输入激活码">
+                    <button onclick="activateCode()">激活</button>
+                </div>
+                <div class="activation-status" id="activationStatus">
+                    <!-- 这里显示当前积分状态 -->
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 添加激活码处理脚本 -->
-    <script>
-    // 检查激活状态
-    function checkActivation() {
-        const activation = localStorage.getItem('activation');
-        if (activation) {
-            const data = JSON.parse(activation);
-            const now = new Date().getTime();
-            if (now < data.expireTime) {
-                const expireDate = new Date(data.expireTime).toLocaleDateString();
-                document.getElementById('activationStatus').innerHTML = 
-                    `当前版本: ${data.version}<br>到期时间: ${expireDate}`;
-                return true;
+        <div class="points-card">
+            <div class="points-section">
+                <div class="points-type" style="color: #ff9800;">购买积分</div>
+                <div style="padding: 15px; background: #fff3e0; border-radius: 6px; margin-top: 10px;">
+                    <p style="line-height: 1.6;">如需要更多聊天积分和点数，请联系邮箱：<a href="mailto:vippay@hagkiest.top" style="color: #ff9800;">vippay@hagkiest.top</a> 专人对接</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function generateActivationCode(basicPoints, advancedPoints) {
+                // 创建原始字符串: "b{basic}a{advanced}t{timestamp}"
+                const now = new Date().getTime();
+                const original = `b${basicPoints}a${advancedPoints}t${now}`;
+                
+                // Base64 编码
+                let encoded = btoa(original);
+                
+                // 自定义字符替换
+                encoded = encoded
+                    .replace(/\+/g, '@')
+                    .replace(/\//g, '#')
+                    .replace(/=/g, '$')
+                    .split('').reverse().join('');
+                
+                // 添加校验位
+                const checksum = encoded.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 256;
+                encoded = checksum.toString(16).padStart(2, '0') + encoded;
+                
+                return encoded;
             }
-        }
-        document.getElementById('activationStatus').textContent = '当前未激活任何付费版本';
-        return false;
-    }
 
-    // 激活码处理
-    function activateCode() {
-        const code = document.getElementById('activationCode').value.trim();
-        if (!code) {
-            alert('请输入激活码');
-            return;
-        }
+            function activateCode() {
+                const code = document.getElementById('activationCode').value.trim();
+                if (!code) {
+                    alert('请输入激活码');
+                    return;
+                }
 
-        // 这里应该是向服务器验证激活码
-        // 示例中使用模拟数据
-        const mockActivation = {
-            'PERSONAL2024': { version: '个人版', days: 30 },
-            'PRO2024': { version: '专业版', days: 30 },
-            'DESKTOP2024': { version: '桌面版', days: 36500 } // 约100年，相当于永久
-        };
+                try {
+                    // 验证校验位
+                    const checksum = parseInt(code.substring(0, 2), 16);
+                    const encodedData = code.substring(2);
+                    const calculatedChecksum = encodedData.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 256;
+                    
+                    if (checksum !== calculatedChecksum) {
+                        throw new Error('无效的激活码');
+                    }
 
-        const activation = mockActivation[code];
-        if (activation) {
-            const now = new Date().getTime();
-            const expireTime = now + (activation.days * 24 * 60 * 60 * 1000);
-            localStorage.setItem('activation', JSON.stringify({
-                version: activation.version,
-                expireTime: expireTime
-            }));
-            checkActivation();
-            alert('激活成功！');
-        } else {
-            alert('无效的激活码');
-        }
-    }
+                    // 解码过程
+                    let decoded = encodedData
+                        .split('').reverse().join('')
+                        .replace(/@/g, '+')
+                        .replace(/#/g, '/')
+                        .replace(/\$/g, '=');
+                    
+                    decoded = atob(decoded);
+                    
+                    // 解析数据
+                    const basicMatch = decoded.match(/b(\d+)a/);
+                    const advancedMatch = decoded.match(/a(\d+)t/);
+                    const timestampMatch = decoded.match(/t(\d+)/);
+                    
+                    if (!basicMatch || !advancedMatch || !timestampMatch) {
+                        throw new Error('激活码格式错误');
+                    }
 
-    // 初始化检查激活状态
-    document.addEventListener('DOMContentLoaded', checkActivation);
-    </script>
+                    const basicPoints = parseInt(basicMatch[1]);
+                    const advancedPoints = parseInt(advancedMatch[1]);
+                    const timestamp = parseInt(timestampMatch[1]);
+                    
+                    // 验证时间戳（24小时内有效）
+                    const now = new Date().getTime();
+                    if (now - timestamp > 24 * 60 * 60 * 1000) {
+                        throw new Error('激活码已过期');
+                    }
+
+                    // 添加积分
+                    const username = localStorage.getItem('username');
+                    if (!username) {
+                        throw new Error('请先登录');
+                    }
+
+                    const points = JSON.parse(localStorage.getItem('user_points') || '{}');
+                    if (!points[username]) {
+                        points[username] = { basic: 0, advanced: 0 };
+                    }
+                    
+                    points[username].basic += basicPoints;
+                    points[username].advanced += advancedPoints;
+                    localStorage.setItem('user_points', JSON.stringify(points));
+
+                    alert(`激活成功！获得${basicPoints}个基础积分和${advancedPoints}个高级积分`);
+                    window.location.reload();
+                } catch (error) {
+                    alert(error.message || '无效的激活码');
+                }
+            }
+
+            // 页面加载时显示当前积分状态
+            document.addEventListener('DOMContentLoaded', function() {
+                const username = localStorage.getItem('username');
+                if (username) {
+                    const points = JSON.parse(localStorage.getItem('user_points') || '{}');
+                    const userPoints = points[username] || { basic: 0, advanced: 0 };
+                    document.getElementById('activationStatus').textContent = 
+                        `当前积分：基础积分 ${userPoints.basic} | 高级积分 ${userPoints.advanced}`;
+                } else {
+                    document.getElementById('activationStatus').textContent = 
+                        '请先登录后再使用激活功能';
+                }
+            });
+        </script>
+    </div>
+    <div class="footer">
+        © 2024 Hispirit工作室 & Hagkiest | 联系我们：<a href="mailto:webadmin@hagkiest.top">webadmin@hagkiest.top</a>
+    </div>
 </body>
 </html> 

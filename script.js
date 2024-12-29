@@ -15,13 +15,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const COOKIE_CONSENT_KEY = 'cookie_consent';
     const CONVERSATIONS_KEY = 'conversations';
     
-    // 添加游客消息限制相关函数
-    const GUEST_MESSAGE_KEY = 'guest_messages';
-    const GUEST_RESET_TIME_KEY = 'guest_reset_time';
-    const MAX_GUEST_MESSAGES = 7;
-
     // 添加自动保存计时器变量
     let autoSaveTimer = null;
+
+    // 添加积分相关常量
+    const POINTS_KEY = 'user_points';
+    const LAST_CHECKIN_KEY = 'last_checkin';
+    const BASIC_POINTS_COST = 3; // 每次对话消耗的基础积分
+
+    // 初始化积分系统
+    function initializePoints() {
+        const username = localStorage.getItem('username');
+        const points = JSON.parse(localStorage.getItem(POINTS_KEY) || '{}');
+        
+        if (!points[username]) {
+            points[username] = {
+                basic: 10,
+                advanced: 1
+            };
+            localStorage.setItem(POINTS_KEY, JSON.stringify(points));
+        }
+    }
+
+    // 获取用户积分
+    function getUserPoints() {
+        const username = localStorage.getItem('username');
+        const points = JSON.parse(localStorage.getItem(POINTS_KEY) || '{}');
+        return points[username] || { basic: 0, advanced: 0 };
+    }
 
     // 检查cookie权限
     function checkCookieConsent() {
@@ -59,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
         newConversationItem.dataset.id = id;
         newConversationItem.innerHTML = `<span>${initialMessage || '新对话'}</span>`;
         
-        // 移除其他active类
         document.querySelectorAll('.conversation-item.active').forEach(item => {
             item.classList.remove('active');
         });
@@ -72,16 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
             chatMessages.innerHTML = '';
         }
         
-        // 保存新对话
         saveConversation(id, initialMessage || '新对话', getCurrentMessages());
-        
-        // 添加右键菜单
         addContextMenu(newConversationItem);
-        
-        // 添加点击事件
         addConversationClickHandler(newConversationItem);
-
-        hasShownContextLimitWarning = false;
     }
 
     // 添加右键菜单
@@ -100,7 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
             menu.style.top = e.pageY + 'px';
             document.body.appendChild(menu);
             
-            // 重命名功能
             menu.querySelector('.rename').addEventListener('click', function() {
                 const newTitle = prompt('请输入新的对话名称:', element.querySelector('span').textContent);
                 if (newTitle) {
@@ -110,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 menu.remove();
             });
             
-            // 删除功能
             menu.querySelector('.delete').addEventListener('click', function() {
                 if (confirm('确定要删除这个对话吗？')) {
                     let conversations = loadConversations();
@@ -121,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 menu.remove();
             });
             
-            // 点击其他地方关闭菜单
             document.addEventListener('click', function closeMenu() {
                 menu.remove();
                 document.removeEventListener('click', closeMenu);
@@ -133,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CONTEXT_LIMITS = {
         guest: {
             free: 0,        // 游客试用版不支持上下文
-            paid: 1024      // 游客付费版支持1024字上��文
+            paid: 1024      // 游客付费版支持1024字上下文
         },
         user: 4096         // 登录用户支持4096字上下文
     };
@@ -143,45 +153,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 修改获取当前消息列表函数
     function getCurrentMessages() {
-        const messages = [];
-        const username = localStorage.getItem('username');
-        const activation = JSON.parse(localStorage.getItem('activation') || '{}');
-        let contextLimit = 0;
-        
-        // 确定上下文限制
-        if (username === 'guest') {
-            contextLimit = activation.version ? CONTEXT_LIMITS.guest.paid : CONTEXT_LIMITS.guest.free;
-        } else {
-            contextLimit = CONTEXT_LIMITS.user;
-        }
-
-        // 获取所有消息
-        const allMessages = Array.from(chatMessages.querySelectorAll('.message')).map(msg => ({
-            text: msg.querySelector('.message-text').textContent,
-            sender: msg.classList.contains('user-message') ? 'user' : 'assistant'
-        }));
-
-        // 如果不支持上下文，只返回最新的消息
-        if (contextLimit === 0) {
-            if (allMessages.length > 0) {
-                return [allMessages[allMessages.length - 1]];
-            }
-            return [];
-        }
-
-        // 计算上下文总长度并收集消息
-        let totalLength = 0;
-        for (let i = allMessages.length - 1; i >= 0; i--) {
-            const messageLength = allMessages[i].text.length;
-            if (totalLength + messageLength <= contextLimit) {
-                messages.unshift(allMessages[i]);
-                totalLength += messageLength;
-            } else {
-                break;
-            }
-        }
-
-        return messages;
+        return Array.from(chatMessages.querySelectorAll('.message')).map(msg => {
+            const messageText = msg.querySelector('.message-text');
+            return {
+                role: msg.classList.contains('user-message') ? 'user' : 'assistant',
+                content: messageText ? messageText.textContent.trim() : ''
+            };
+        }).filter(msg => msg.content); // 过滤掉空消息
     }
 
     // 加载对话内容
@@ -199,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 添加对话点击事件处理
     function addConversationClickHandler(element) {
         element.addEventListener('click', function() {
-            // 保存当前对话
             const currentActive = document.querySelector('.conversation-item.active');
             if (currentActive) {
                 saveConversation(
@@ -209,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 );
             }
 
-            // 切换到新对话
             document.querySelectorAll('.conversation-item.active').forEach(item => {
                 item.classList.remove('active');
             });
@@ -240,6 +216,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 修改 API 请求函数
     async function sendToAI(messages) {
         try {
+            // 获取用户输入的消息
+            const userMessage = messages.find(msg => msg.role === 'user');
+            if (!userMessage || !userMessage.content.trim()) {
+                throw new Error('消息内容不能为空');
+            }
+
             const response = await fetch(API_CONFIG.url, {
                 method: 'POST',
                 headers: {
@@ -247,33 +229,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     model: 'lite',
-                    messages: [
-                        {
-                            role: "system",
-                            content: "你是一个知识渊博的AI助手，现在你的名字叫LikeXF，请记住这一点。"
-                        },
-                        ...messages
-                    ],
+                    messages: [{
+                        role: 'user',
+                        content: userMessage.content.trim()
+                    }],
                     stream: false
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            console.log('API Response:', data);
+
+            // 处理错误响应
+            if (data.error) {
+                throw new Error(data.error.message || '请求失败');
             }
 
-            const data = await response.json();
-            console.log('API Response:', data); // 用于调试
-
-            if (data.code === 0 && data.choices && data.choices[0].message) {
+            // 处理成功响应
+            if (data.code === 0 && data.choices && data.choices[0] && data.choices[0].message) {
                 let aiResponse = data.choices[0].message.content;
-                
-                // 对游客用户限制回复长度
-                if (localStorage.getItem('username') === 'guest') {
-                    if (aiResponse.length > 600) {
-                        aiResponse = aiResponse.substring(0, 600) + '\n\n[剩余内容请登录后查看...]';
-                    }
-                }
                 
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message assistant-message';
@@ -300,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 function typeText() {
                     if (index < aiResponse.length) {
                         processedText += aiResponse[index];
-                        // 处理数学公式和Markdown
                         const mathProcessed = renderMath(processedText);
                         messageText.innerHTML = marked.parse(mathProcessed);
                         index++;
@@ -312,59 +285,127 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 return aiResponse;
             } else {
-                throw new Error('Invalid API response format');
+                throw new Error('无效的响应格式');
             }
         } catch (error) {
             console.error('API请求失败:', error);
-            addMessage('抱歉，我遇到了一些问题，请稍后再试。', 'assistant');
-            return '抱歉，我遇到了一些问题，请稍后再试。';
+            throw error;
         }
     }
 
-    // 检查游客消息限制
-    function checkGuestMessageLimit() {
-        if (localStorage.getItem('username') !== 'guest') return true;
+    // 修改更新积分显示函数
+    function updatePointsDisplay() {
+        const points = getUserPoints();
+        const username = localStorage.getItem('username');
+        
+        // 只显示积分，不显示模型版本
+        const modelVersionElement = document.querySelector('.model-version');
+        if (!modelVersionElement) {
+            const pointsDisplay = document.createElement('div');
+            pointsDisplay.className = 'model-version';
+            pointsDisplay.style.position = 'fixed';
+            pointsDisplay.style.top = '10px';
+            pointsDisplay.style.left = '10px';
+            pointsDisplay.style.padding = '5px 10px';
+            pointsDisplay.style.backgroundColor = '#f0f0f0';
+            pointsDisplay.style.borderRadius = '5px';
+            pointsDisplay.style.zIndex = '1000';
+            pointsDisplay.style.fontSize = '14px';
+            document.body.appendChild(pointsDisplay);
+        }
+        
+        // 只对非管理员显示积分
+        if (username !== 'admin') {
+            document.querySelector('.model-version').textContent = 
+                `基础积分: ${points.basic} | 高级积分: ${points.advanced}`;
+        } else {
+            // 管理员不显示任何内容
+            document.querySelector('.model-version').style.display = 'none';
+        }
+    }
 
-        const now = new Date().getTime();
-        const resetTime = localStorage.getItem(GUEST_RESET_TIME_KEY);
-        const messageCount = JSON.parse(localStorage.getItem(GUEST_MESSAGE_KEY) || '0');
+    // 修改检查并扣除积分函数
+    function checkAndDeductPoints() {
+        const username = localStorage.getItem('username');
+        if (username === 'admin') return true;
 
-        // 检查是否需要重置计数（新的一天）
-        if (resetTime && now - parseInt(resetTime) >= 24 * 60 * 60 * 1000) {
-            localStorage.setItem(GUEST_MESSAGE_KEY, '0');
-            localStorage.setItem(GUEST_RESET_TIME_KEY, now.toString());
+        const points = JSON.parse(localStorage.getItem(POINTS_KEY) || '{}');
+        if (!points[username]) {
+            points[username] = { basic: 0, advanced: 0 };
+        }
+
+        // 检查积分是否足够
+        if (points[username].basic >= BASIC_POINTS_COST) {
+            // 扣除积分
+            points[username].basic -= BASIC_POINTS_COST;
+            localStorage.setItem(POINTS_KEY, JSON.stringify(points));
+            updatePointsDisplay();
             return true;
         }
-
-        // 如果第一次发送消息，设置重置时间
-        if (!resetTime) {
-            localStorage.setItem(GUEST_RESET_TIME_KEY, now.toString());
-        }
-
-        // 检查消息数量
-        if (messageCount >= MAX_GUEST_MESSAGES) {
-            addMessage('游客用户每天只能发送3条消息，请登录后继续使用。', 'assistant');
-            return false;
-        }
-
-        return true;
+        
+        addMessage('积分不足，请签到获取更多积分。', 'assistant');
+        return false;
     }
 
-    // 更新游客消息计数
-    function updateGuestMessageCount() {
-        if (localStorage.getItem('username') === 'guest') {
-            const count = parseInt(localStorage.getItem(GUEST_MESSAGE_KEY) || '0');
-            localStorage.setItem(GUEST_MESSAGE_KEY, (count + 1).toString());
+    // 签到功能
+    window.checkIn = function() {
+        const username = localStorage.getItem('username');
+        const lastCheckin = localStorage.getItem(LAST_CHECKIN_KEY);
+        const today = new Date().toDateString();
+
+        if (lastCheckin === today) {
+            alert('今天已经签到过了，明天再来吧！');
+            return;
         }
+
+        const points = JSON.parse(localStorage.getItem(POINTS_KEY) || '{}');
+        if (!points[username]) {
+            points[username] = { basic: 0, advanced: 0 };
+        }
+        points[username].basic += 10;
+        points[username].advanced += 1;
+        localStorage.setItem(POINTS_KEY, JSON.stringify(points));
+        localStorage.setItem(LAST_CHECKIN_KEY, today);
+        
+        updatePointsDisplay();
+        alert('签到成功！获得10个基础积分和1个高级积分');
+    };
+
+    // 添加等待提示函数
+    function showThinkingMessage() {
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'message assistant-message thinking';
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = 'AI';
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.innerHTML = '<div class="thinking-dots"><span>.</span><span>.</span><span>.</span></div>';
+        
+        content.appendChild(messageText);
+        thinkingDiv.appendChild(avatar);
+        thinkingDiv.appendChild(content);
+        chatMessages.appendChild(thinkingDiv);
+        
+        // 滚动到底
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return thinkingDiv;
     }
 
     // 修改发送消息函数
     async function sendMessage() {
         const message = messageInput.value.trim();
-        if (message) {
-            // 检查游客消息限制
-            if (!checkGuestMessageLimit()) {
-                messageInput.value = '';
+        if (!message) return;
+
+        try {
+            // 检查积分
+            if (!checkAndDeductPoints()) {
                 return;
             }
 
@@ -373,57 +414,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 createNewChat(message);
             }
 
-            // 添加用户消息
+            // 添加用户消息并立即保存
             addMessage(message, 'user');
+            autoSaveCurrentChat();
             
-            // 更新游客消息计数
-            updateGuestMessageCount();
-            
-            const activeChat = document.querySelector('.conversation-item.active');
-            if (activeChat) {
-                if (activeChat.querySelector('span').textContent === '新对话') {
-                    activeChat.querySelector('span').textContent = message;
-                }
-            }
-            
+            // 添加思考中提示
+            const thinkingMessage = showThinkingMessage();
             messageInput.value = '';
 
-            try {
-                // 获取当前对话的消息（带上下文限制）
-                const messages = getCurrentMessages().map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'assistant',
-                    content: msg.text
-                }));
+            // 构造消息对象
+            const messages = [{
+                role: 'user',
+                content: message
+            }];
 
-                // 如果是游客试用版且还没显示过提醒，则显示提醒
-                if (localStorage.getItem('username') === 'guest' && 
-                    !JSON.parse(localStorage.getItem('activation') || '{}').version && 
-                    !hasShownContextLimitWarning) {
-                    addMessage('注意：试用版不支持上下文对话功能。如需使用上下文功能，请升级到付费版本。', 'assistant');
-                    hasShownContextLimitWarning = true;
-                }
-
-                // 发送到AI并获取响应
-                await sendToAI(messages);
-                
-                // 保存对话
-                if (activeChat) {
-                    saveConversation(
-                        activeChat.dataset.id,
-                        activeChat.querySelector('span').textContent,
-                        getCurrentMessages()
-                    );
-                }
-
-                // 更新游客剩余次数显示
-                if (localStorage.getItem('username') === 'guest') {
-                    const remainingMessages = MAX_GUEST_MESSAGES - 
-                        (parseInt(localStorage.getItem(GUEST_MESSAGE_KEY) || '0'));
-                    updateModelVersionDisplay(remainingMessages);
-                }
-            } catch (error) {
-                console.error('发送消息失败:', error);
-            }
+            // 发送到AI并获取响应
+            await sendToAI(messages);
+            
+            // 移除思考中提示
+            thinkingMessage.remove();
+            
+            // 再次保存对话（包含AI回复）
+            autoSaveCurrentChat();
+        } catch (error) {
+            console.error('发送消息失败:', error);
+            thinkingMessage.remove();
+            addMessage(error.message || '抱歉，我遇到了一些问题，请稍后再试。', 'assistant');
+            // 出错时也保存对话
+            autoSaveCurrentChat();
         }
     }
 
@@ -504,15 +522,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageText = document.createElement('div');
         messageText.className = 'message-text';
 
-        // 处理数学公式和代码块
         if (sender === 'assistant') {
             try {
-                // 先处理数学公式
                 const mathProcessed = renderMath(text);
-                // 再处理 Markdown，确保代码块被正确处理
                 messageText.innerHTML = marked.parse(mathProcessed);
-                
-                // 手动触发代码高亮
                 messageText.querySelectorAll('pre code').forEach((block) => {
                     hljs.highlightElement(block);
                 });
@@ -529,9 +542,10 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.appendChild(content);
         
         chatMessages.appendChild(messageDiv);
-        
-        // 滚动到最新消息
         chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // 每次添加消息后立即保存
+        autoSaveCurrentChat();
     }
 
     // 修改加载保存的对话函数
@@ -566,45 +580,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 修改初始欢迎消息
-    function showWelcomeMessage() {
-        const welcomeMessage = document.createElement('div');
-        welcomeMessage.className = 'message assistant-message';
-        
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = 'AI';
-
-        const content = document.createElement('div');
-        content.className = 'message-content';
-        
-        const messageText = document.createElement('div');
-        messageText.className = 'message-text';
-        
-        content.appendChild(messageText);
-        welcomeMessage.appendChild(avatar);
-        welcomeMessage.appendChild(content);
-        chatMessages.appendChild(welcomeMessage);
-
-        // 逐字显示欢迎消息
-        const text = '你好！我是LikeXF，有什么需要吗？';
-        let index = 0;
-        
-        function typeText() {
-            if (index < text.length) {
-                messageText.textContent += text[index];
-                index++;
-                setTimeout(typeText, 50);
-            }
-        }
-        
-        typeText();
-    }
-
     // 修改初始化部分
     function initialize() {
         checkCookieConsent();
-        const conversations = loadConversations();
+        initializePoints();
+        updatePointsDisplay();
         
         // 添加欢迎弹窗
         const username = localStorage.getItem('username');
@@ -612,21 +592,14 @@ document.addEventListener('DOMContentLoaded', function() {
             showWelcomePopup(username);
         }
         
-        if (Object.keys(conversations).length > 0) {
+        // 加载保存的对话
+        if (checkCookieConsent()) {
             loadSavedConversations();
         } else {
             showWelcomeMessage();
         }
 
-        // 如果是游客，显示消息限制提示
-        if (localStorage.getItem('username') === 'guest') {
-            const remainingMessages = MAX_GUEST_MESSAGES - 
-                (parseInt(localStorage.getItem(GUEST_MESSAGE_KEY) || '0'));
-            updateModelVersionDisplay(remainingMessages);
-            addMessage(`您正在以游客身份使用，每天可发送${MAX_GUEST_MESSAGES}条消息，今天还剩${remainingMessages}条。`, 'assistant');
-        }
-
-        // 设置自动保存定时器
+        // 设置自动保存
         setupAutoSave();
     }
 
@@ -653,8 +626,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const dropdown = document.createElement('div');
         dropdown.className = 'user-dropdown';
         dropdown.innerHTML = `
+            <div class="user-dropdown-item" onclick="checkIn()">每日签到</div>
+            <div class="user-dropdown-item" onclick="window.open('points-convert.html', '_blank')">积分转换</div>
             <div class="user-dropdown-item" onclick="logout()">退出登录</div>
-            <div class="user-dropdown-item" onclick="window.open('pricing.html', '_blank')">购买套餐</div>
+            <div class="user-dropdown-item" onclick="window.open('pricing.html', '_blank')">积分说明</div>
         `;
         return dropdown;
     }
@@ -703,49 +678,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.open('pricing.html', '_blank');
     });
 
-    // 添加自动保存功能
+    // 修改自动保存设置
     function setupAutoSave() {
-        // 清除之前定时器
         if (autoSaveTimer) {
             clearInterval(autoSaveTimer);
         }
-
-        // 每分钟保存一次
-        autoSaveTimer = setInterval(() => {
-            const activeChat = document.querySelector('.conversation-item.active');
-            if (activeChat) {
-                saveConversation(
-                    activeChat.dataset.id,
-                    activeChat.querySelector('span').textContent,
-                    getCurrentMessages()
-                );
-            }
-        }, 60000); // 60秒
-    }
-
-    // 修改更新模型版本显示的函数
-    function updateModelVersionDisplay(remainingMessages) {
-        const modelVersionElement = document.querySelector('.model-version');
-        if (!modelVersionElement) {
-            const versionDisplay = document.createElement('div');
-            versionDisplay.className = 'model-version';
-            versionDisplay.style.position = 'fixed';
-            // 修改位置到左上角
-            versionDisplay.style.top = '10px';
-            versionDisplay.style.left = '10px';  // 改为左对齐
-            versionDisplay.style.padding = '5px 10px';
-            versionDisplay.style.backgroundColor = '#f0f0f0';
-            versionDisplay.style.borderRadius = '5px';
-            versionDisplay.style.zIndex = '1000'; // 确保显示在最上层
-            versionDisplay.style.fontSize = '14px'; // 设置合适的字体大小
-            document.body.appendChild(versionDisplay);
-        }
-        
-        const displayText = localStorage.getItem('username') === 'guest' 
-            ? `模型版本: 2 (剩余次数: ${remainingMessages})` 
-            : '模型版本: 2';
-        
-        document.querySelector('.model-version').textContent = displayText;
+        // 每30秒自动保存一次
+        autoSaveTimer = setInterval(autoSaveCurrentChat, 30000);
     }
 
     // 修改欢迎弹窗函数
@@ -759,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // 添加弹窗样式
+        // 加弹窗样式
         popup.style.position = 'fixed';
         popup.style.top = '50%';
         popup.style.left = '50%';
@@ -777,16 +716,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const welcomeText = popup.querySelector('.welcome-text');
         welcomeText.style.color = '#ffffff';     // 白色文字
         welcomeText.style.fontSize = '24px';     // 更大的字体
-        welcomeText.style.fontWeight = 'bold';   // 加粗文字
+        welcomeText.style.fontWeight = 'bold';   // 加粗字体
         welcomeText.style.marginTop = '10px';    // 添加上边距
         
         // 设置图标样式
         const welcomeIcon = popup.querySelector('.welcome-icon');
-        welcomeIcon.style.fontSize = '36px';     // 更大的图标
+        welcomeIcon.style.fontSize = '36px';     // 更大图标
         welcomeIcon.style.color = '#ffffff';     // 白色图标
         welcomeIcon.style.marginBottom = '10px'; // 添加下边距
         
-        // 添加动画样式
+        // 添动画样式
         const style = document.createElement('style');
         style.textContent = `
             @keyframes welcomeFade {
@@ -812,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(popup);
         
-        // 2.5秒后��动移除弹窗
+        // 2.5秒后动移除弹窗
         setTimeout(() => {
             popup.remove();
             style.remove();
@@ -905,11 +844,37 @@ document.addEventListener('DOMContentLoaded', function() {
         modalOverlay.classList.remove('show');
     });
 
-    // 修改原有的点击事件监听器
+    // 修改原的点击事件监听器
     document.addEventListener('click', function(e) {
         if (!modelMenu.contains(e.target) && !modelDropdown.contains(e.target)) {
             modelMenu.classList.remove('show');
             modalOverlay.classList.remove('show');
         }
     });
+
+    // 初始化积分系统
+    initializePoints();
+    updatePointsDisplay();
+
+    // 添加自动保存函数
+    function autoSaveCurrentChat() {
+        const activeChat = document.querySelector('.conversation-item.active');
+        if (activeChat) {
+            const messages = Array.from(chatMessages.querySelectorAll('.message')).map(msg => ({
+                text: msg.querySelector('.message-text').textContent,
+                sender: msg.classList.contains('user-message') ? 'user' : 'assistant'
+            }));
+
+            saveConversation(
+                activeChat.dataset.id,
+                activeChat.querySelector('span').textContent,
+                messages
+            );
+        }
+    }
+
+    // 添加更多自动保存触发点
+    chatMessages.addEventListener('input', autoSaveCurrentChat);  // 编辑消息时
+    chatMessages.addEventListener('paste', autoSaveCurrentChat);  // 粘贴内容时
+    window.addEventListener('beforeunload', autoSaveCurrentChat); // 页面关闭前
 }); 

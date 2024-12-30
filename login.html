@@ -138,6 +138,35 @@
             text-decoration: underline;
         }
     </style>
+    <script>
+        // 添加页面加载完成后的淡出动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const transition = document.querySelector('.page-transition');
+            if (transition) {
+                setTimeout(() => {
+                    transition.classList.add('fade-out');
+                    setTimeout(() => {
+                        transition.remove();
+                    }, 500);
+                }, 50);
+            }
+        });
+        
+        // 添加页面跳转函数
+        function navigateTo(url) {
+            const transition = document.createElement('div');
+            transition.className = 'page-transition';
+            document.body.appendChild(transition);
+        
+            setTimeout(() => {
+                transition.classList.add('active');
+            }, 50);
+        
+            setTimeout(() => {
+                window.location.href = url;
+            }, 500);
+        }
+        </script>
 </head>
 <body>
     <div class="login-container">

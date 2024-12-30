@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 检查登录状态
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-        window.location.href = 'login.html';
+        navigateTo('login.html');
         return;
     }
 
@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.logout = function() {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('username');
-        window.location.href = 'login.html';
+        navigateTo('login.html');
     };
 
     // 设置用户头像显示
@@ -877,4 +877,45 @@ document.addEventListener('DOMContentLoaded', function() {
     chatMessages.addEventListener('input', autoSaveCurrentChat);  // 编辑消息时
     chatMessages.addEventListener('paste', autoSaveCurrentChat);  // 粘贴内容时
     window.addEventListener('beforeunload', autoSaveCurrentChat); // 页面关闭前
+
+    // 添加页面过渡函数
+    function navigateTo(url) {
+        // 创建过渡元素
+        const transition = document.createElement('div');
+        transition.className = 'page-transition';
+        document.body.appendChild(transition);
+
+        // 触发过渡动画
+        setTimeout(() => {
+            transition.classList.add('active');
+        }, 50);
+
+        // 等待动画完成后跳转
+        setTimeout(() => {
+            window.location.href = url;
+        }, 500);
+    }
+
+    // 修改所有跳转代码
+    userAvatar.onclick = () => navigateTo('login.html');
+
+    // 修改登录提示弹窗中的跳转
+    loginPrompt.innerHTML = `
+        <h3 style="margin-bottom: 15px; color: #333;">提示</h3>
+        <p style="margin-bottom: 20px; color: #666;">您暂未登录，即将跳转到登录页面...</p>
+        <button onclick="navigateTo('login.html')" style="
+            padding: 8px 30px;
+            background: #1a8cff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        ">立即登录</button>
+    `;
+
+    // 修改自动跳转
+    setTimeout(() => {
+        navigateTo('login.html');
+    }, 3000);
 }); 

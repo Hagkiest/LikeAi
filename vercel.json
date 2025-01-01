@@ -8,16 +8,8 @@
     ],
     "routes": [
         {
-            "src": "/api/(.*)",
-            "dest": "api/index.py"
-        },
-        {
             "src": "/(.*)",
-            "dest": "/$1"
+            "dest": "api/index.py"
         }
-    ],
-    "env": {
-        "RESEND_API_KEY": "re_PzhTamUX_CpjABTwYaLpMs43oZX2mfuR3",
-        "DATABASE_URL": "postgresql://neondb_owner:JOZv4B3iPYuF@ep-soft-cloud-a1tydbjr.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-    }
+    ]
 } 

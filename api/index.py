@@ -14,11 +14,21 @@ import time
 # 加载环境变量
 load_dotenv()
 
-app = Flask(__name__)
+# Vercel 环境配置
+if os.environ.get('VERCEL_ENV') == 'production':
+    app = Flask(__name__, static_folder='../')
+else:
+    app = Flask(__name__)
+
 CORS(app)
 
 # Resend API 配置
-resend.api_key = os.getenv('RESEND_API_KEY')
+resend.api_key = os.environ.get('RESEND_API_KEY')
+
+# 数据库配置
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("No DATABASE_URL environment variable set")
 
 # 存储验证码的字典（实际应用中应该使用数据库）
 verification_codes = {}

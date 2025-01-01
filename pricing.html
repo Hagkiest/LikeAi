@@ -391,7 +391,22 @@
                 }
 
                 try {
-                    // 验证校验位
+                    // 获取用户名和设备指纹
+                    const username = localStorage.getItem('username');
+                    if (!username) {
+                        throw new Error('请先登录');
+                    }
+                    if (username === 'guest') {
+                        throw new Error('游客账号无法使用激活码，请注册正式账号');
+                    }
+
+                    // 检查是否已经使用过激活码
+                    const usedCodes = JSON.parse(localStorage.getItem('used_activation_codes') || '{}');
+                    if (usedCodes[code]) {
+                        throw new Error('该激活码已被使用');
+                    }
+
+                    // 验证校验位和解码过程保持不变...
                     const checksum = parseInt(code.substring(0, 2), 16);
                     const encodedData = code.substring(2);
                     const calculatedChecksum = encodedData.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 256;
@@ -400,7 +415,7 @@
                         throw new Error('无效的激活码');
                     }
 
-                    // 解码过程
+                    // 解码过程...
                     let decoded = encodedData
                         .split('').reverse().join('')
                         .replace(/@/g, '+')
@@ -413,27 +428,36 @@
                     const basicMatch = decoded.match(/b(\d+)a/);
                     const advancedMatch = decoded.match(/a(\d+)t/);
                     const timestampMatch = decoded.match(/t(\d+)/);
+                    const userMatch = decoded.match(/u([^t]+)t/);  // 添加用户标识匹配
                     
-                    if (!basicMatch || !advancedMatch || !timestampMatch) {
+                    if (!basicMatch || !advancedMatch || !timestampMatch || !userMatch) {
                         throw new Error('激活码格式错误');
                     }
 
                     const basicPoints = parseInt(basicMatch[1]);
                     const advancedPoints = parseInt(advancedMatch[1]);
                     const timestamp = parseInt(timestampMatch[1]);
+                    const targetUser = userMatch[1];
                     
-                    // 验证时间戳（24小时内有效）
+                    // 验证时间戳（10分钟内有效）
                     const now = new Date().getTime();
-                    if (now - timestamp > 24 * 60 * 60 * 1000) {
+                    if (now - timestamp > 10 * 60 * 1000) {
                         throw new Error('激活码已过期');
                     }
 
-                    // 添加积分
-                    const username = localStorage.getItem('username');
-                    if (!username) {
-                        throw new Error('请先登录');
+                    // 验证用户匹配
+                    if (targetUser !== username) {
+                        throw new Error('该激活码不属于当前用户');
                     }
 
+                    // 记录已使用的激活码
+                    usedCodes[code] = {
+                        username: username,
+                        useTime: now
+                    };
+                    localStorage.setItem('used_activation_codes', JSON.stringify(usedCodes));
+
+                    // 添加积分
                     const points = JSON.parse(localStorage.getItem('user_points') || '{}');
                     if (!points[username]) {
                         points[username] = { basic: 0, advanced: 0 };

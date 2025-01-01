@@ -84,6 +84,10 @@
             <label>高级积分数量</label>
             <input type="number" id="advancedPoints" value="10">
         </div>
+        <div class="input-group">
+            <label>目标用户名</label>
+            <input type="text" id="username" placeholder="用户名">
+        </div>
         <button onclick="generate()">生成激活码</button>
         <div class="result" id="result"></div>
         <button onclick="logout()" style="margin-top: 20px; background: #666;">退出</button>
@@ -95,13 +99,26 @@
             const authCode = document.getElementById('authCode').value;
             const authError = document.getElementById('authError');
             
-            // 使用简单的编码方式
-            const validCode = btoa('LikeXF2024').split('').reverse().join('');
+            // 使用更复杂的编码方式
+            const salt = "HagkiestLikeXF";
+            const timestamp = new Date().getTime();
+            const validCode = btoa(salt + timestamp.toString()).split('').reverse().join('');
+            const hashedInput = btoa(authCode + salt).split('').reverse().join('');
             
-            if (authCode === 'LikeXF2024') {
+            // 自定义加密函数
+            function encrypt(str) {
+                return str.split('').map(char => 
+                    String.fromCharCode(char.charCodeAt(0) ^ 0x7F)
+                ).join('');
+            }
+            
+            const encryptedCode = encrypt("LikeXF2024" + salt);
+            
+            if (encrypt(authCode + salt) === encryptedCode) {
                 document.getElementById('authContainer').style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
-                localStorage.setItem('toolAuth', 'true');
+                // 存储加密后的认证状态
+                localStorage.setItem('toolAuth', encrypt(timestamp.toString()));
             } else {
                 authError.style.display = 'block';
                 setTimeout(() => {
@@ -129,9 +146,21 @@
         function generate() {
             const basicPoints = document.getElementById('basicPoints').value;
             const advancedPoints = document.getElementById('advancedPoints').value;
+            const username = document.getElementById('username').value.trim();
+            
+            if (!username) {
+                alert('请输入目标用户名');
+                return;
+            }
+            
+            // 验证不能为游客账号
+            if (username === 'guest') {
+                alert('不能为游客账号生成激活码');
+                return;
+            }
             
             const now = new Date().getTime();
-            const original = `b${basicPoints}a${advancedPoints}t${now}`;
+            const original = `b${basicPoints}a${advancedPoints}u${username}t${now}`;
             
             let encoded = btoa(original);
             encoded = encoded
@@ -148,9 +177,29 @@
 
         // 检查登录状态
         window.onload = function() {
-            if (localStorage.getItem('toolAuth') === 'true') {
+            try {
+                const storedAuth = localStorage.getItem('toolAuth');
+                if (!storedAuth) {
+                    return;
+                }
+                // 验证存储的认证状态
+                const decrypted = storedAuth.split('').map(char => 
+                    String.fromCharCode(char.charCodeAt(0) ^ 0x7F)
+                ).join('');
+                
+                const timestamp = parseInt(decrypted);
+                const now = new Date().getTime();
+                
+                // 添加认证有效期（24小时）
+                if (now - timestamp > 24 * 60 * 60 * 1000) {
+                    localStorage.removeItem('toolAuth');
+                    return;
+                }
+                
                 document.getElementById('authContainer').style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
+            } catch (e) {
+                localStorage.removeItem('toolAuth');
             }
         };
     </script>

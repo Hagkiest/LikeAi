@@ -151,20 +151,36 @@
 
         // 更新积分显示
         function updatePointsDisplay() {
-            const username = localStorage.getItem('username');
-            if (!username) {
+            const email = localStorage.getItem('userEmail');
+            if (!email) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            const points = JSON.parse(localStorage.getItem('user_points') || '{}');
-            const userPoints = points[username] || { basic: 0, advanced: 0 };
-            
-            document.getElementById('pointsStatus').innerHTML = `
-                当前积分：<br>
-                基础积分：${userPoints.basic}<br>
-                高级积分：${userPoints.advanced}
-            `;
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: localStorage.getItem('userPassword')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                document.getElementById('pointsStatus').innerHTML = `
+                    当前积分：<br>
+                    基础积分：${data.user.points_basic}<br>
+                    高级积分：${data.user.points_advanced}
+                `;
+            })
+            .catch(error => {
+                console.error('获取积分失败:', error);
+                window.location.href = 'login.html';
+            });
         }
 
         // 转换积分
@@ -175,29 +191,54 @@
                 return;
             }
 
-            const username = localStorage.getItem('username');
-            const points = JSON.parse(localStorage.getItem('user_points') || '{}');
-            const userPoints = points[username];
-
-            if (userPoints.advanced < convertAmount) {
-                alert('高级积分不足');
+            const email = localStorage.getItem('userEmail');
+            if (!email) {
+                window.location.href = 'login.html';
                 return;
             }
 
-            // 执行转换
-            userPoints.advanced -= convertAmount;
-            userPoints.basic += convertAmount * 9;
-
-            // 保存更新后的积分
-            points[username] = userPoints;
-            localStorage.setItem('user_points', JSON.stringify(points));
-
-            // 更新显示
-            updatePointsDisplay();
-            alert(`转换成功！\n扣除${convertAmount}个高级积分\n获得${convertAmount * 9}个基础积分`);
-            
-            // 清空输入框
-            document.getElementById('convertAmount').value = '';
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: localStorage.getItem('userPassword')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                if (data.user.points_advanced < convertAmount) {
+                    throw new Error('高级积分不足');
+                }
+                
+                // 执行转换
+                return fetch('/api/update-points', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        points_advanced: data.user.points_advanced - convertAmount,
+                        points_basic: data.user.points_basic + (convertAmount * 9)
+                    })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                alert(`转换成功！\n扣除${convertAmount}个高级积分\n获得${convertAmount * 9}个基础积分`);
+                updatePointsDisplay();
+                document.getElementById('convertAmount').value = '';
+            })
+            .catch(error => {
+                alert(error.message || '转换失败');
+            });
         }
     </script>
 </body>

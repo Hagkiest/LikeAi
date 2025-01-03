@@ -4,22 +4,6 @@
         {
             "src": "api/index.py",
             "use": "@vercel/python"
-        },
-        {
-            "src": "*.html",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.css",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.js",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "images/*",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
@@ -31,5 +15,9 @@
             "src": "/(.*)",
             "dest": "/$1"
         }
-    ]
+    ],
+    "env": {
+        "RESEND_API_KEY": "re_PzhTamUX_CpjABTwYaLpMs43oZX2mfuR3",
+        "DATABASE_URL": "postgresql://neondb_owner:JOZv4B3iPYuF@ep-soft-cloud-a1tydbjr.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+    }
 } 

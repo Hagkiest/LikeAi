@@ -1,245 +1,430 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // 检查登录状态
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-        navigateTo('login.html');
-        return;
-    }
-
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    const chatMessages = document.getElementById('chatMessages');
-    const newChatButton = document.querySelector('.new-chat');
-    const conversationList = document.querySelector('.conversation-group');
-    const userAvatar = document.querySelector('.user-avatar');
-
-    // Cookie 相关函数
-    const COOKIE_CONSENT_KEY = 'cookie_consent';
-    const CONVERSATIONS_KEY = 'conversations';
-    
-    // API 配置
-    const API_CONFIG = {
-        url: '/api/chat'
-    };
-
-    // 显示用户菜单
-    function showUserMenu(event) {
-        event.preventDefault();
-        const menu = document.createElement('div');
-        menu.className = 'user-menu';
-        menu.innerHTML = `
-            <div class="menu-item" onclick="checkIn()">签到</div>
-            <div class="menu-item" onclick="window.location.href='pricing.html'">积分说明</div>
-            <div class="menu-item" onclick="window.location.href='points-convert.html'">积分转换</div>
-            <div class="menu-item" onclick="logout()">退出登录</div>
-        `;
-        
-        // 移除现有菜单
-        const existingMenu = document.querySelector('.user-menu');
-        if (existingMenu) {
-            existingMenu.remove();
-        }
-        
-        document.body.appendChild(menu);
-        menu.style.position = 'absolute';
-        menu.style.top = `${event.pageY}px`;
-        menu.style.left = `${event.pageX}px`;
-        
-        // 点击其他地方关闭菜单
-        document.addEventListener('click', function closeMenu(e) {
-            if (!menu.contains(e.target) && e.target !== userAvatar) {
-                menu.remove();
-                document.removeEventListener('click', closeMenu);
-            }
-        });
-    }
-
-    // 显示思考中的消息
-    function showThinkingMessage() {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message assistant-message thinking';
-        
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = 'AI';
-
-        const content = document.createElement('div');
-        content.className = 'message-content';
-        content.textContent = '思考中...';
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(content);
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        return messageDiv;
-    }
-
-    // 添加消息到聊天界面
-    function addMessage(content, role = 'user') {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${role}-message`;
-        
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = role === 'user' ? '我' : 'AI';
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-        
-        const messageText = document.createElement('div');
-        messageText.className = 'message-text';
-        
-        if (role === 'assistant') {
-            messageText.innerHTML = marked.parse(renderMath(content));
-        } else {
-            messageText.textContent = content;
-        }
-        
-        messageContent.appendChild(messageText);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(messageContent);
-        chatMessages.appendChild(messageDiv);
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return messageDiv;
-    }
-
-    // 渲染数学公式
-    function renderMath(text) {
-        return text.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
-            try {
-                return katex.renderToString(formula);
-            } catch (e) {
-                console.error('Math rendering error:', e);
-                return match;
-            }
-        });
-    }
-
-    // 发送消息到 AI
-    async function sendToAI(messages) {
-        try {
-            const response = await fetch(API_CONFIG.url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'lite',
-                    messages: messages,
-                    stream: false
-                })
-            });
-
-            const data = await response.json();
-            if (data.error) {
-                throw new Error(data.error.message || '请求失败');
-            }
-
-            if (data.code === 0 && data.choices && data.choices[0] && data.choices[0].message) {
-                return data.choices[0].message.content;
-            } else {
-                throw new Error('无效的响应格式');
-            }
-        } catch (error) {
-            console.error('API请求失败:', error);
-            throw error;
+class ChatManager {
+    constructor() {
+        this.chats = this.loadChats();
+        this.currentChatId = null;
+        this.setupEventListeners();
+        this.renderChatList();
+        this.updateUserPoints();
+        if (this.chats.length === 0) {
+            this.createNewChat();
         }
     }
 
-    // 保存对话
-    function saveConversation() {
-        if (!checkCookieConsent()) return;
-        
-        const messages = Array.from(chatMessages.children).map(msg => ({
-            role: msg.classList.contains('user-message') ? 'user' : 'assistant',
-            content: msg.querySelector('.message-text').textContent
-        }));
-
-        const conversations = JSON.parse(localStorage.getItem(CONVERSATIONS_KEY) || '[]');
-        conversations.push({
-            id: Date.now(),
-            messages: messages,
-            timestamp: new Date().toISOString()
-        });
-
-        localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
-        loadConversationList();
+    setCookie(name, value, days = 30) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + ";" + expires + ";path=/";
     }
 
-    // 加载对话列表
-    function loadConversationList() {
-        if (!checkCookieConsent() || !conversationList) return;
-
-        const conversations = JSON.parse(localStorage.getItem(CONVERSATIONS_KEY) || '[]');
-        conversationList.innerHTML = '';
-
-        conversations.forEach(conv => {
-            const item = document.createElement('div');
-            item.className = 'conversation-item';
-            item.textContent = conv.messages[0]?.content?.substring(0, 20) || '新对话';
-            item.onclick = () => loadConversation(conv);
-            conversationList.appendChild(item);
-        });
-    }
-
-    // 加载特定对话
-    function loadConversation(conversation) {
-        chatMessages.innerHTML = '';
-        conversation.messages.forEach(msg => {
-            addMessage(msg.content, msg.role);
-        });
-    }
-
-    // 开始新对话
-    function startNewChat() {
-        chatMessages.innerHTML = '';
-        saveConversation();
-    }
-
-    // 检查cookie权限
-    function checkCookieConsent() {
-        const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-        if (consent === null) {
-            document.getElementById('cookieConsent').style.display = 'flex';
-        }
-        return consent === 'accepted';
-    }
-
-    // 绑定事件监听器
-    function bindEvents() {
-        if (sendButton) {
-            sendButton.addEventListener('click', handleSend);
-        }
-
-        if (messageInput) {
-            messageInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
+    getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) {
+                try {
+                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                } catch (e) {
+                    return null;
                 }
-            });
+            }
         }
+        return null;
+    }
 
-        if (newChatButton) {
-            newChatButton.addEventListener('click', startNewChat);
+    loadChats() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            const userChats = this.getCookie(`chats_${user.id}`);
+            if (userChats) {
+                return userChats;
+            }
         }
+        return [];
+    }
 
-        if (userAvatar) {
-            userAvatar.addEventListener('contextmenu', function(e) {
+    saveChats() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            this.setCookie(`chats_${user.id}`, this.chats);
+        }
+    }
+
+    createNewChat() {
+        const chatId = Date.now().toString();
+        const newChat = {
+            id: chatId,
+            name: '新对话',
+            messages: []
+        };
+        this.chats.unshift(newChat);
+        this.saveChats();
+        this.renderChatList();
+        this.selectChat(chatId);
+    }
+
+    selectChat(chatId) {
+        this.currentChatId = chatId;
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.id === chatId) {
+                item.classList.add('active');
+            }
+        });
+        this.renderMessages();
+    }
+
+    renameChat(chatId, newName) {
+        const chat = this.chats.find(c => c.id === chatId);
+        if (chat) {
+            chat.name = newName;
+            this.saveChats();
+            this.renderChatList();
+        }
+    }
+
+    deleteChat(chatId) {
+        this.chats = this.chats.filter(c => c.id !== chatId);
+        this.saveChats();
+        this.renderChatList();
+        if (this.currentChatId === chatId) {
+            this.currentChatId = this.chats[0]?.id || null;
+            this.renderMessages();
+        }
+    }
+
+    renderChatList() {
+        const chatList = document.getElementById('chatList');
+        chatList.innerHTML = this.chats.map(chat => `
+            <div class="chat-item ${chat.id === this.currentChatId ? 'active' : ''}" 
+                 data-id="${chat.id}">
+                ${chat.name}
+            </div>
+        `).join('');
+    }
+
+    formatMessage(content) {
+        // 处理代码块
+        content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
+            return `<pre class="code-block"><code>${code}</code></pre>`;
+        });
+
+        // 处理数学公式 $...$
+        content = content.replace(/\$(.*?)\$/g, (match, formula) => {
+            return `<span class="math-formula">${formula}</span>`;
+        });
+
+        return content;
+    }
+
+    async typeMessage(element, text, speed = 50) {
+        let index = 0;
+        const formattedText = this.formatMessage(text);
+        element.innerHTML = '';  // 使用 innerHTML 而不是 textContent
+        
+        // 创建临时 div 来解析 HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = formattedText;
+        const textContent = tempDiv.textContent;
+        
+        return new Promise(resolve => {
+            const interval = setInterval(() => {
+                if (index < textContent.length) {
+                    // 逐字显示，但保持 HTML 标签
+                    element.innerHTML = this.formatMessage(textContent.substring(0, index + 1));
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    // 最后设置完整的格式化文本
+                    element.innerHTML = formattedText;
+                    resolve();
+                }
+            }, speed);
+        });
+    }
+
+    async renderMessages() {
+        const messagesContainer = document.getElementById('chatMessages');
+        const currentChat = this.chats.find(c => c.id === this.currentChatId);
+        if (currentChat) {
+            messagesContainer.innerHTML = currentChat.messages.map(msg => {
+                const content = msg.content || '';
+                const formattedContent = msg.type === 'user' ? content : this.formatMessage(content);
+                return `
+                    <div class="message ${msg.type}">
+                        <div class="message-avatar">${msg.type === 'user' ? '朕' : 'AI'}</div>
+                        <div class="message-content">${msg.type === 'user' ? content : ''}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // 如果最后一条消息是 AI 的回复，添加打字机效果
+            const lastMessage = currentChat.messages[currentChat.messages.length - 1];
+            if (lastMessage && lastMessage.type === 'assistant') {
+                const lastMessageElement = messagesContainer.lastElementChild.querySelector('.message-content');
+                await this.typeMessage(lastMessageElement, lastMessage.content);
+            }
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } else {
+            messagesContainer.innerHTML = '';
+        }
+    }
+
+    setupEventListeners() {
+        // 创建新对话
+        document.getElementById('newChatBtn').addEventListener('click', () => {
+            this.createNewChat();
+        });
+
+        // 发送消息
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        const sendMessage = async () => {
+            await this.sendMessage();
+        };
+
+        sendButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                showUserMenu(e);
-            });
+                await sendMessage();
+            }
+        });
+
+        // 右键菜单
+        this.setupContextMenus();
+
+        // 点击对话列表项
+        document.getElementById('chatList').addEventListener('click', (e) => {
+            const chatItem = e.target.closest('.chat-item');
+            if (chatItem) {
+                this.selectChat(chatItem.dataset.id);
+            }
+        });
+    }
+
+    setupContextMenus() {
+        const chatContextMenu = document.getElementById('chatContextMenu');
+        const avatarContextMenu = document.getElementById('avatarContextMenu');
+
+        // 对话列表右键菜单
+        document.getElementById('chatList').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const chatItem = e.target.closest('.chat-item');
+            if (chatItem) {
+                chatContextMenu.style.display = 'block';
+                
+                // 计算菜单位置
+                const rect = chatItem.getBoundingClientRect();
+                chatContextMenu.style.left = `${rect.right + 5}px`;
+                chatContextMenu.style.top = `${rect.top}px`;
+                
+                chatContextMenu.dataset.chatId = chatItem.dataset.id;
+            }
+        });
+
+        // 用户头像右键菜单
+        document.getElementById('userAvatar').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const avatar = e.target.closest('.user-profile');
+            if (avatar) {
+                avatarContextMenu.style.display = 'flex';
+                
+                // 计算菜单位置
+                const rect = avatar.getBoundingClientRect();
+                const menuWidth = avatarContextMenu.offsetWidth;
+                const menuHeight = avatarContextMenu.offsetHeight;
+                
+                // 检查右边界
+                let leftPos = rect.left + (rect.width / 2);
+                if (leftPos + menuWidth > window.innerWidth) {
+                    leftPos = window.innerWidth - menuWidth - 10;
+                }
+                
+                // 检查下边界
+                let topPos = rect.bottom + 5;
+                if (topPos + menuHeight > window.innerHeight) {
+                    topPos = rect.top - menuHeight - 5;
+                }
+                
+                avatarContextMenu.style.left = `${leftPos}px`;
+                avatarContextMenu.style.top = `${topPos}px`;
+            }
+        });
+
+        // 点击其他地方关闭菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu') && !e.target.closest('.user-profile')) {
+                chatContextMenu.style.display = 'none';
+                avatarContextMenu.style.display = 'none';
+            }
+        });
+
+        // 处理右键菜单项点击
+        chatContextMenu.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            const chatId = chatContextMenu.dataset.chatId;
+
+            if (action === 'rename') {
+                const newName = prompt('请输入新的对话名称：');
+                if (newName) {
+                    this.renameChat(chatId, newName);
+                }
+            } else if (action === 'delete') {
+                if (confirm('确定要删除这个对话吗？')) {
+                    this.deleteChat(chatId);
+                }
+            }
+        });
+    }
+
+    async sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const content = messageInput.value.trim();
+        
+        if (content && this.currentChatId) {
+            const chat = this.chats.find(c => c.id === this.currentChatId);
+            
+            // 获取用户信息
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                alert('请先登录');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 添加用户消息
+            const userMessage = {
+                type: 'user',
+                content: content
+            };
+            chat.messages.push(userMessage);
+            this.renderMessages();
+            messageInput.value = '';
+
+            // 显示AI正在输入的动画
+            this.showTypingIndicator();
+
+            try {
+                // 准备发送给API的消息历史
+                const messages = chat.messages.map(msg => ({
+                    role: msg.type === 'user' ? 'user' : 'assistant',
+                    content: msg.content
+                }));
+
+                // 发送请求到后端
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Api-Key': ENCRYPTED_API_KEY
+                    },
+                    body: JSON.stringify({ 
+                        messages,
+                        model: "lite",
+                        userId: user.id
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '请求失败');
+                }
+
+                const data = await response.json();
+                
+                if (data.code === 0 && data.choices && data.choices[0] && data.choices[0].message) {
+                    // 从服务器获取最新积分
+                    await this.updateUserPoints();
+                    
+                    // 创建新的AI消息
+                    const aiMessage = {
+                        type: 'assistant',
+                        content: data.choices[0].message.content || ''
+                    };
+                    chat.messages.push(aiMessage);
+                    await this.renderMessages();
+                    this.saveChats();
+                    
+                    // 滚动到底部
+                    const messagesContainer = document.getElementById('chatMessages');
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else {
+                    throw new Error('Invalid response from API');
+                }
+
+                this.hideTypingIndicator();
+            } catch (error) {
+                console.error('Error:', error);
+                this.hideTypingIndicator();
+                // 显示错误消息
+                const errorMessage = {
+                    type: 'assistant',
+                    content: error.message || '抱歉，发生了一些错误，请稍后重试。'
+                };
+                chat.messages.push(errorMessage);
+                this.renderMessages();
+                this.saveChats();
+            }
         }
     }
 
-    // 初始化函数
-    function initialize() {
-        bindEvents();
-        updatePointsDisplay();
-        loadConversationList();
+    showTypingIndicator() {
+        const messagesContainer = document.getElementById('chatMessages');
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'message';
+        typingIndicator.innerHTML = `
+            <div class="message-avatar">AI</div>
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        `;
+        messagesContainer.appendChild(typingIndicator);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // 页面加载时初始化
-    initialize();
+    hideTypingIndicator() {
+        const typingIndicator = document.querySelector('.typing-indicator')?.parentElement;
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    updatePointsDisplay() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.placeholder = `输入消息，Shift + Enter 换行（基础积分：${user.normal_points} 高级积分：${user.premium_points}）`;
+        }
+    }
+
+    async updateUserPoints() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            try {
+                const response = await fetch(`/api/user/points?userId=${user.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    user.normal_points = data.normal_points;
+                    user.premium_points = data.premium_points;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    this.updatePointsDisplay();
+                }
+            } catch (error) {
+                console.error('Failed to update points:', error);
+            }
+        }
+    }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    window.chatManager = new ChatManager();
 }); 

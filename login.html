@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - LikeXF</title>
-    <link rel="icon" href="/images/image.jpg" type="image/x-icon">
+    <title>登录 - LikeAI</title>
     <style>
+        :root {
+            --primary-color: #1a73e8;
+            --error-color: #dc3545;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,538 +17,157 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
             min-height: 100vh;
-            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .login-container {
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
-            padding: 20px;
-            margin-bottom: 80px;
         }
 
-        .login-title {
+        h1 {
             text-align: center;
-            font-size: 24px;
+            color: var(--primary-color);
             margin-bottom: 30px;
-            color: #333;
-        }
-
-        .login-form {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .form-group {
             margin-bottom: 20px;
-            position: relative;
         }
 
-        .form-group input {
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
             outline: none;
         }
 
-        .form-group input:focus {
-            border-color: #00b96b;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #666;
-        }
-
-        .login-button {
+        button {
             width: 100%;
             padding: 12px;
-            background-color: #00b96b;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 16px;
             cursor: pointer;
-            margin-bottom: 20px;
+            transition: background-color 0.3s;
         }
 
-        .login-button:hover {
-            background-color: #00a65a;
+        button:hover {
+            background-color: #1557b0;
         }
 
-        .login-options {
-            text-align: center;
-            color: #666;
-        }
-
-        .login-options a {
-            color: #00b96b;
-            text-decoration: none;
-            margin-left: 5px;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 20px 0;
-            color: #666;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .divider span {
-            padding: 0 10px;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
+        .error {
+            color: var(--error-color);
             font-size: 14px;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.9);
-            border-top: 1px solid #eee;
-            z-index: 1000;
+            margin-top: 5px;
         }
 
-        .footer a {
-            color: #00b96b;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .tab.active {
-            color: #1a8cff;
-            border-bottom: 2px solid #1a8cff;
-        }
-        
-        .verification-group {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .send-code-button {
-            white-space: nowrap;
-            padding: 8px 12px;
-            background: #f5f5f5;
-            color: #666;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .send-code-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .password-requirements {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-        
-        .forgot-password {
-            text-align: right;
-            margin-top: 10px;
-        }
-        
-        .forgot-password a {
-            color: #1a8cff;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .back-to-login {
-            text-align: center;
+        .links {
             margin-top: 20px;
-        }
-        
-        .back-to-login a {
-            color: #1a8cff;
-            text-decoration: none;
+            text-align: center;
             font-size: 14px;
         }
-        
-        .back-to-login a:hover {
+
+        .links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .links a:hover {
             text-decoration: underline;
         }
     </style>
-    <script>
-        // 添加页面加载完成后的淡出动画
-        document.addEventListener('DOMContentLoaded', function() {
-            const transition = document.querySelector('.page-transition');
-            if (transition) {
-                setTimeout(() => {
-                    transition.classList.add('fade-out');
-                    setTimeout(() => {
-                        transition.remove();
-                    }, 500);
-                }, 50);
-            }
-        });
-        
-        // 添加页面跳转函数
-        function navigateTo(url) {
-            const transition = document.createElement('div');
-            transition.className = 'page-transition';
-            document.body.appendChild(transition);
-        
-            setTimeout(() => {
-                transition.classList.add('active');
-            }, 50);
-        
-            setTimeout(() => {
-                window.location.href = url;
-            }, 500);
-        }
-        </script>
 </head>
 <body>
-    <div class="login-container">
-        <h1 class="login-title" id="pageTitle">欢迎回来</h1>
-        <div class="login-form">
-            <div class="tabs">
-                <span class="tab active" onclick="switchTab('login')">登录</span>
-                <span class="tab" onclick="switchTab('register')">注册</span>
+    <div class="container">
+        <h1>登录</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">邮箱地址</label>
+                <input type="email" id="email" required>
+                <div class="error" id="emailError"></div>
             </div>
             
-            <!-- 登录表单 -->
-            <div id="loginForm">
-                <div class="form-group">
-                    <input type="email" id="loginEmail" placeholder="邮箱" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="password" placeholder="密码" required>
-                    <span class="password-toggle" onclick="togglePassword()">👁</span>
-                </div>
-                <button class="login-button" onclick="login()">继续</button>
-                <div class="forgot-password">
-                    <a href="#" onclick="switchTab('reset')">忘记密码？</a>
-                </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" required>
+                <div class="error" id="passwordError"></div>
             </div>
             
-            <!-- 重置密码表单 -->
-            <div id="resetForm" style="display: none;">
-                <div class="form-group">
-                    <input type="email" id="resetEmail" placeholder="邮箱" required>
-                </div>
-                <div class="form-group verification-group">
-                    <input type="text" id="resetCode" placeholder="验证码" required>
-                    <button class="send-code-button" onclick="sendResetCode()">发送验证码</button>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="newPassword" placeholder="新密码" required>
-                    <div class="password-requirements">
-                        密码要求：8-15位字母+数字组合
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="confirmPassword" placeholder="确认新密码" required>
-                </div>
-                <button class="login-button" onclick="resetPassword()">重置密码</button>
-            </div>
-
-            <!-- 注册表单 -->
-            <div id="registerForm" style="display: none;">
-                <div class="form-group">
-                    <input type="email" id="registerEmail" placeholder="邮箱" required>
-                </div>
-                <div class="form-group verification-group">
-                    <input type="text" id="verificationCode" placeholder="验证码" required>
-                    <button class="send-code-button" onclick="sendVerificationCode()">发送验证码</button>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="registerPassword" placeholder="设置密码" required>
-                    <div class="password-requirements">
-                        密码要求：8-15位字母+数字组合
-                    </div>
-                </div>
-                <button class="login-button" onclick="register()">注册</button>
-            </div>
-
-            <div class="divider">
-                <span>OR</span>
-            </div>
-            <div class="login-options">
-                <p style="color: #666; font-size: 14px;">还没有账号？点击上方"注册"创建一个吧！</p>
-            </div>
+            <button type="submit">登录</button>
+        </form>
+        
+        <div class="links">
+            <a href="/register.html">注册账号</a>
+            <a href="/forgot-password.html">忘记密码</a>
         </div>
     </div>
 
     <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
-        }
-
-        function validatePassword(password) {
-            const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$/;
-            return regex.test(password);
-        }
-
-        function login() {
-            const email = document.getElementById('loginEmail').value;
+        const form = document.getElementById('loginForm');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert('请输入邮箱和密码');
-                return;
-            }
-
-            fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('username', data.user.username);
-                localStorage.setItem('userEmail', data.user.email);
-                window.location.href = 'index.html';
-            })
-            .catch(error => {
-                alert(error.message || '登录失败');
-            });
-        }
-
-        // 检查是否已登录
-        if (localStorage.getItem('isLoggedIn') === 'true') {
-            window.location.href = 'index.html';
-        }
-
-        let countdown = 0;
-        let countdownTimer = null;
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             
-            // 如果是重置密码，隐藏标签栏
-            const tabsContainer = document.querySelector('.tabs');
-            if (tab === 'reset') {
-                tabsContainer.style.display = 'none';
-            } else {
-                tabsContainer.style.display = 'flex';
-                document.querySelector(`.tab:${tab === 'login' ? 'first-child' : 'last-child'}`).classList.add('active');
-            }
-            
-            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-            document.getElementById('resetForm').style.display = tab === 'reset' ? 'block' : 'none';
-            
-            // 更新页面标题
-            const titles = {
-                'login': '欢迎回来',
-                'register': '创建账号',
-                'reset': '重置密码'
-            };
-            document.getElementById('pageTitle').textContent = titles[tab];
-            
-            // 如果是重置密码，添加返回按钮
-            if (tab === 'reset') {
-                const resetForm = document.getElementById('resetForm');
-                if (!resetForm.querySelector('.back-to-login')) {
-                    const backButton = document.createElement('div');
-                    backButton.className = 'back-to-login';
-                    backButton.innerHTML = '<a href="#" onclick="switchTab(\'login\')">返回登录</a>';
-                    resetForm.appendChild(backButton);
-                }
-            }
-        }
-        
-        async function sendVerificationCode() {
-            const email = document.getElementById('registerEmail').value;
-            if (!email || !email.includes('@')) {
-                alert('请输入有效的邮箱地址');
-                return;
-            }
-            
-            const button = document.querySelector('.send-code-button');
-            button.disabled = true;
-            countdown = 60;
+            // 清除错误信息
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
             
             try {
-                const response = await fetch('/api/send-verification', {
+                const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
                 });
                 
-                if (!response.ok) throw new Error('发送失败');
+                const data = await response.json();
                 
-                countdownTimer = setInterval(() => {
-                    button.textContent = `${countdown}秒后重试`;
-                    countdown--;
-                    if (countdown < 0) {
-                        clearInterval(countdownTimer);
-                        button.disabled = false;
-                        button.textContent = '发送验证码';
+                if (response.ok) {
+                    // 存储用户信息
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/';
+                } else {
+                    if (data.error.includes('邮箱')) {
+                        document.getElementById('emailError').textContent = data.error;
+                    } else if (data.error.includes('密码')) {
+                        document.getElementById('passwordError').textContent = data.error;
+                    } else {
+                        alert(data.error);
                     }
-                }, 1000);
+                }
             } catch (error) {
-                alert('发送验证码失败，请重试');
-                button.disabled = false;
+                alert('登录失败，请稍后重试');
             }
-        }
-        
-        async function register() {
-            const email = document.getElementById('registerEmail').value;
-            const code = document.getElementById('verificationCode').value;
-            const password = document.getElementById('registerPassword').value;
-            
-            if (!email || !code || !password) {
-                alert('请填写所有必填项');
-                return;
-            }
-
-            if (!validatePassword(password)) {
-                alert('密码必须是8-15位字母和数字的组合');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, code, password })
-                });
-                
-                if (!response.ok) throw new Error('注册失败');
-                
-                alert('注册成功！请登录');
-                switchTab('login');
-            } catch (error) {
-                alert('注册失败，请重试');
-            }
-        }
-
-        async function sendResetCode() {
-            const email = document.getElementById('resetEmail').value;
-            if (!email || !email.includes('@')) {
-                alert('请输入有效的邮箱地址');
-                return;
-            }
-            
-            const button = document.querySelector('#resetForm .send-code-button');
-            button.disabled = true;
-            countdown = 60;
-            
-            try {
-                const response = await fetch('/api/send-verification', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, type: 'reset' })
-                });
-                
-                if (!response.ok) throw new Error('发送失败');
-                
-                countdownTimer = setInterval(() => {
-                    button.textContent = `${countdown}秒后重试`;
-                    countdown--;
-                    if (countdown < 0) {
-                        clearInterval(countdownTimer);
-                        button.disabled = false;
-                        button.textContent = '发送验证码';
-                    }
-                }, 1000);
-            } catch (error) {
-                alert('发送验证码失败，请重试');
-                button.disabled = false;
-            }
-        }
-
-        async function resetPassword() {
-            const email = document.getElementById('resetEmail').value;
-            const code = document.getElementById('resetCode').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (!email || !code || !newPassword || !confirmPassword) {
-                alert('请填写所有必填项');
-                return;
-            }
-
-            if (!validatePassword(newPassword)) {
-                alert('密码必须是8-15位字母和数字的组合');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                alert('两次输入的密码不一致');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/reset-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email, 
-                        code, 
-                        new_password: newPassword 
-                    })
-                });
-                
-                if (!response.ok) throw new Error('重置失败');
-                
-                alert('密码重置成功！请使用新密码登录');
-                switchTab('login');
-            } catch (error) {
-                alert('密码重置失败，请重试');
-            }
-        }
+        });
     </script>
-    <div class="footer">
-        © 2024 Hispirit工作室 & Hagkiest | 联系我们：<a href="mailto:webadmin@hagkiest.top">webadmin@hagkiest.top</a>
-    </div>
 </body>
 </html> 

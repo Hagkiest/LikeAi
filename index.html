@@ -3,143 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="AI, 聊天, 人工智能, 对话, ChatGPT, AI对话, 智能问答, AI模型, 大模型 , 讯飞星火, Ai助手, 智能问答, AI模型, , Ai">
-    <meta name="description" content="LikeAI是一个智能AI聊天助手，提供智能对话、文本生成、代码编写、数学解答等多功能服务。">
-    <title>LikeAI - 智能AI助手</title>
-    <link rel="icon" href="/images/image.jpg" type="image/x-icon">
+    <title>AI对话助手</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script>
-        // 添加页面加载完成后的淡出动画
-        document.addEventListener('DOMContentLoaded', function() {
-            const transition = document.querySelector('.page-transition');
-            if (transition) {
-                setTimeout(() => {
-                    transition.classList.add('fade-out');
-                    setTimeout(() => {
-                        transition.remove();
-                    }, 500);
-                }, 50);
-            }
-        });
-        
-        // 添加页面跳转函数
-        function navigateTo(url) {
-            const transition = document.createElement('div');
-            transition.className = 'page-transition';
-            document.body.appendChild(transition);
-        
-            setTimeout(() => {
-                transition.classList.add('active');
-            }, 50);
-        
-            setTimeout(() => {
-                window.location.href = url;
-            }, 500);
-        }
-        </script>
 </head>
 <body>
-    <div class="app-container">
+    <div class="container">
         <!-- 左侧对话列表 -->
         <div class="sidebar">
-            <!-- 顶部选择器 -->
-            <div class="model-tabs">
-                <div class="tab active">LikeChat</div>
-                <div class="tab">探索 LikeChat</div>
+            <button id="newChatBtn" class="new-chat-btn">
+                <span>创建新对话</span>
+            </button>
+            <div id="chatList" class="chat-list">
+                <!-- 对话列表将通过JS动态生成 -->
+            </div>
+        </div>
+
+        <!-- 主要对话区域 -->
+        <div class="main-content">
+            <div class="chat-header">
+                <div class="current-chat-title">新对话</div>
+                <div class="user-profile" id="userAvatar">
+                    <span>朕</span>
+                </div>
             </div>
             
-            <!-- 对话列表 -->
-            <div class="conversation-list">
-                <!-- 今天的对话 -->
-                <div class="conversation-group">
-                    <div class="group-header">今天</div>
-                    <div class="new-chat">
-                        <span>点我创建新对话</span>
-                    </div>
-                </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- 消息内容将通过JS动态生成 -->
             </div>
 
-            <!-- 底部升级提示 -->
-            <div class="upgrade-prompt">
-                <div class="upgrade-content">
-                    <img src="https://img.51miz.com/Element/00/86/47/09/e4104f79_E864709_9eda0ff7.png" alt="升级" class="upgrade-icon" style="width: 24px; height: 24px;">
-                    <div class="upgrade-text">
-                        <div>升级套餐</div>
-                        <div class="upgrade-desc">成为VIP享受更多权益</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右侧聊天区域 -->
-        <div class="chat-container">
-            <div class="mobile-menu-button" id="mobileMenuButton">
-                <div class="menu-icon">☰</div>
-            </div>
-            <!-- 原有的聊天界面内容 -->
-            <div class="model-selector">
-                <span class="model-name">讯飞星火</span>
-                <button class="model-dropdown" id="modelDropdown">▼</button>
-                <div class="model-menu" id="modelMenu">
-                    <div class="model-option selected">讯飞星火</div>
-                    <!-- 未来可以在这里添加更多模型选项 -->
-                </div>
-                <!-- 添加更新说明链接 -->
-                <span class="update-link" id="updateLink">v1.6.2</span>
-                <div class="user-menu">
-                    <div class="user-avatar" id="userAvatar">朕</div>
-                </div>
-            </div>
-
-            <div class="chat-area">
-                <div class="chat-messages" id="chatMessages">
-                </div>
-                
-                <div class="chat-input-container">
-                    <textarea class="chat-input" placeholder="给'星火-3.5'发送消息" id="messageInput"></textarea>
-                    <button class="send-button" id="sendButton">↑</button>
-                </div>
-            </div>
-
-            <div class="function-buttons">
-                <button class="function-btn">创建图片</button>
-                <button class="function-btn">总结文本</button>
-                <button class="function-btn">快捷键帮助</button>
-                <button class="function-btn">代码</button>
-                <button class="function-btn">提供建议</button>
-                <button class="function-btn more-btn">暂未解锁</button>
+            <div class="chat-input-container">
+                <textarea id="messageInput" placeholder="输入消息，Shift + Enter 换行"></textarea>
+                <button id="sendButton">发送</button>
             </div>
         </div>
     </div>
+
+    <!-- 右键菜单 -->
+    <div id="chatContextMenu" class="context-menu">
+        <div class="menu-item" data-action="rename">重命名</div>
+        <div class="menu-item" data-action="delete">删除</div>
+    </div>
+
+    <div id="avatarContextMenu" class="context-menu">
+        <div class="menu-item" data-action="checkin">打卡签到</div>
+        <div class="menu-item" data-action="points">积分兑换</div>
+        <div class="menu-item" data-action="logout">退出登录</div>
+    </div>
+
+    <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="text-align: center;">
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+            <div style="margin-top: 10px;">正在加载...</div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
     <script src="script.js"></script>
-    <div class="cookie-consent" id="cookieConsent" style="display: none;">
-        <div class="cookie-text">
-            我们使用cookie来保存您的对话记录和登录状态。若您拒绝则无法使用该网页，是否同意我们使用cookie？
-        </div>
-        <div class="cookie-consent-buttons">
-            <button class="accept" id="acceptCookies">同意</button>
-            <button class="decline" id="declineCookies">拒绝</button>
-        </div>
-    </div>
+
     <script>
-        document.getElementById('declineCookies').addEventListener('click', function() {
-            window.location.href = '/WrongPages/NOcookie.html';
-        });
+    // 等待 DOM 加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // 检查登录状态
+        const user = localStorage.getItem('user');
+        if (!user) {
+            setTimeout(() => {
+                alert('请先登录');
+                window.location.href = '/login.html';
+            }, 2000);
+        } else {
+            // 已登录，隐藏加载动画并初始化聊天管理器
+            loadingOverlay.style.display = 'none';
+            window.chatManager = new ChatManager();
+        }
+    });
+
+    // 修改 ChatManager 类中的 avatarContextMenu 点击事件处理
+    document.getElementById('avatarContextMenu').addEventListener('click', async (e) => {
+        const action = e.target.dataset.action;
+        switch(action) {
+            case 'checkin':
+                try {
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    if (!user) {
+                        alert('请先登录');
+                        window.location.href = '/login.html';
+                        return;
+                    }
+
+                    const response = await fetch('/api/checkin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ userId: user.id })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert(`打卡成功！获得积分：${data.points}\n当前总积分：${data.total_points}`);
+                        // 更新本地存储的用户积分
+                        user.normal_points = data.total_points;
+                        localStorage.setItem('user', JSON.stringify(user));
+                        window.chatManager.updatePointsDisplay();
+                    } else {
+                        alert(data.error || '打卡失败');
+                    }
+                } catch (error) {
+                    alert('打卡失败，请稍后重试');
+                }
+                break;
+            case 'points':
+                alert('积分兑换功能开发中...');
+                break;
+            case 'logout':
+                if (confirm('确定要退出登录吗？')) {
+                    try {
+                        await fetch('/api/logout', { method: 'POST' });
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                    } catch (error) {
+                        alert('退出失败，请稍后重试');
+                    }
+                }
+                break;
+        }
+    });
     </script>
-    <!-- 添加更新说明弹窗 -->
-    <div class="update-modal" id="updateModal">
-        <div class="update-modal-content">
-            <h2>v1.6.2更新说明</h2>
-            <p>    本次更新改善了聊天的保存机制，修改了部分ai输出的渲染机制，同时加强了大模型版本，使用讯飞星火付费大模型，并将游客聊天免费次数从5改为7。未来将会增加更多大模型供大家选择！</p>
-            <button class="close-modal" id="closeModal">×</button>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="footer">
-        © 2024 Hispirit工作室 & Hagkiest | 联系我们：<a href="mailto:webadmin@hagkiest.top">webadmin@hagkiest.top</a>
-    </div>
 </body>
 </html> 

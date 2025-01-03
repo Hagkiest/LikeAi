@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 flask==2.0.1
 flask-cors==3.0.10
 requests==2.26.0
@@ -6,3 +7,12 @@ python-dotenv==0.19.0
 psycopg2-binary==2.9.9
 bcrypt==4.0.1
 SQLAlchemy>=1.4.41,<2.0.0 
+=======
+flask
+flask-cors
+requests
+resend
+python-dotenv
+psycopg2-binary
+SQLAlchemy 
+>>>>>>> 9aa49f89d69bf495d185b35fc09c3575edd716a6

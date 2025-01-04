@@ -5,6 +5,19 @@
             "src": "api/index.py",
             "use": "@vercel/python"
         },
+	{
+            "src": "api/__init__.py",
+            "use": "@vercel/python"
+        },
+	{
+            "src": "api/database.py",
+            "use": "@vercel/python"
+        },
+	{
+            "src": "api/send_code.py",
+            "use": "@vercel/python"
+        },
+
         {
             "src": "*.html",
             "use": "@vercel/static"

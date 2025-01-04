@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 import os
 from database import db_pool, init_db
 from email_service import generate_verification_code, send_verification_email
@@ -10,11 +10,13 @@ app = Flask(__name__, static_folder='..', static_url_path='')
 
 @app.route('/')
 def index():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory('..', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    return send_from_directory(app.static_folder, path)
+    if os.path.exists(os.path.join('..', path)):
+        return send_from_directory('..', path)
+    return send_from_directory('..', 'index.html')
 
 # ... 其他路由保持不变 ...
 

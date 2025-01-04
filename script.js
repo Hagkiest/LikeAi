@@ -1,9 +1,9 @@
 class ChatManager {
     constructor() {
-        this.chats = this.loadChats();
-        this.currentChatId = null;
+        this.chats = [];
+        this.currentChat = null;
+        this.loadChats();  // 先加载聊天记录
         this.setupEventListeners();
-        this.renderChatList();
         this.updateUserPoints();
         if (this.chats.length === 0) {
             this.createNewChat();
@@ -35,21 +35,28 @@ class ChatManager {
     }
 
     loadChats() {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user) {
-            const userChats = this.getCookie(`chats_${user.id}`);
-            if (userChats) {
-                return userChats;
+        const savedChats = localStorage.getItem('chats');
+        if (savedChats) {
+            this.chats = JSON.parse(savedChats);
+            if (this.chats.length > 0) {
+                this.currentChat = this.chats[0];
+                this.renderMessages();  // 使用 renderMessages 替代 displayCurrentChat
+                this.renderChatList();  // 更新聊天列表显示
             }
         }
-        return [];
     }
 
     saveChats() {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user) {
-            this.setCookie(`chats_${user.id}`, this.chats);
-        }
+        const chatsToSave = this.chats.map(chat => ({
+            id: chat.id,
+            title: chat.title || '新对话',
+            messages: chat.messages.map(msg => ({
+                role: msg.role,
+                content: msg.content,
+                id: msg.id
+            }))
+        }));
+        localStorage.setItem('chats', JSON.stringify(chatsToSave));
     }
 
     createNewChat() {
@@ -119,10 +126,10 @@ class ChatManager {
         return content;
     }
 
-    async typeMessage(element, text, speed = 50) {
+    async typeMessage(element, text, speed = 30) {
         let index = 0;
         const formattedText = this.formatMessage(text);
-        element.innerHTML = '';  // 使用 innerHTML 而不是 textContent
+        element.innerHTML = '';
         
         // 创建临时 div 来解析 HTML
         const tempDiv = document.createElement('div');
@@ -135,10 +142,18 @@ class ChatManager {
                     // 逐字显示，但保持 HTML 标签
                     element.innerHTML = this.formatMessage(textContent.substring(0, index + 1));
                     index++;
+                    
+                    // 每次更新后重新渲染数学公式
+                    if (window.MathJax) {
+                        window.MathJax.typesetPromise && window.MathJax.typesetPromise([element]);
+                    }
                 } else {
                     clearInterval(interval);
                     // 最后设置完整的格式化文本
                     element.innerHTML = formattedText;
+                    if (window.MathJax) {
+                        window.MathJax.typesetPromise && window.MathJax.typesetPromise([element]);
+                    }
                     resolve();
                 }
             }, speed);
@@ -283,94 +298,93 @@ class ChatManager {
         });
     }
 
+    addMessage(content, role) {
+        const messageId = Date.now().toString();
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${role}`;
+        messageElement.innerHTML = `
+            <div class="message-avatar">${role === 'user' ? '朕' : 'AI'}</div>
+            <div class="message-content"></div>
+        `;
+        
+        document.getElementById('chatMessages').appendChild(messageElement);
+        
+        // 滚动到底部
+        const messagesContainer = document.getElementById('chatMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        if (role === 'user') {
+            // 用户消息直接显示
+            messageElement.querySelector('.message-content').innerHTML = this.formatMessage(content);
+        } else {
+            // AI 消息逐字显示
+            this.typeMessage(messageElement.querySelector('.message-content'), content);
+        }
+        
+        return messageId;
+    }
+
     async sendMessage() {
         const messageInput = document.getElementById('messageInput');
         const content = messageInput.value.trim();
         
-        if (content && this.currentChatId) {
-            const chat = this.chats.find(c => c.id === this.currentChatId);
-            
-            // 获取用户信息
+        if (!content || !this.currentChat) return;
+
+        try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
-                alert('请先登录');
-                window.location.href = '/login.html';
-                return;
+                throw new Error('未登录');
             }
 
-            // 添加用户消息
-            const userMessage = {
-                type: 'user',
-                content: content
-            };
-            chat.messages.push(userMessage);
-            this.renderMessages();
+            // 添加用户消息到界面
+            const userMessageId = this.addMessage(content, 'user');
             messageInput.value = '';
 
-            // 显示AI正在输入的动画
+            // 准备发送到服务器的消息历史
+            const messages = this.currentChat.messages.concat([{
+                role: 'user',
+                content: content
+            }]);
+
+            // 显示加载动画
             this.showTypingIndicator();
 
-            try {
-                // 准备发送给API的消息历史
-                const messages = chat.messages.map(msg => ({
-                    role: msg.type === 'user' ? 'user' : 'assistant',
-                    content: msg.content
-                }));
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages,
+                    model: "lite",
+                    userId: user.id
+                })
+            });
 
-                // 发送请求到后端
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Api-Key': ENCRYPTED_API_KEY
-                    },
-                    body: JSON.stringify({ 
-                        messages,
-                        model: "lite",
-                        userId: user.id
-                    })
-                });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '请求失败');
+            }
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || '请求失败');
-                }
-
-                const data = await response.json();
+            const data = await response.json();
+            this.hideTypingIndicator();
+            
+            if (data.code === 0 && data.choices && data.choices[0] && data.choices[0].message) {
+                const aiResponse = data.choices[0].message.content;
+                // 添加 AI 响应到界面并等待打字效果完成
+                const aiMessageId = this.addMessage(aiResponse, 'assistant');
                 
-                if (data.code === 0 && data.choices && data.choices[0] && data.choices[0].message) {
-                    // 从服务器获取最新积分
-                    await this.updateUserPoints();
-                    
-                    // 创建新的AI消息
-                    const aiMessage = {
-                        type: 'assistant',
-                        content: data.choices[0].message.content || ''
-                    };
-                    chat.messages.push(aiMessage);
-                    await this.renderMessages();
-                    this.saveChats();
-                    
-                    // 滚动到底部
-                    const messagesContainer = document.getElementById('chatMessages');
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                } else {
-                    throw new Error('Invalid response from API');
-                }
-
-                this.hideTypingIndicator();
-            } catch (error) {
-                console.error('Error:', error);
-                this.hideTypingIndicator();
-                // 显示错误消息
-                const errorMessage = {
-                    type: 'assistant',
-                    content: error.message || '抱歉，发生了一些错误，请稍后重试。'
-                };
-                chat.messages.push(errorMessage);
-                this.renderMessages();
+                // 保存消息到当前对话
+                this.currentChat.messages.push(
+                    { role: 'user', content, id: userMessageId },
+                    { role: 'assistant', content: aiResponse, id: aiMessageId }
+                );
                 this.saveChats();
             }
+        } catch (error) {
+            this.hideTypingIndicator();
+            console.error('发送消息失败:', error);
+            alert(error.message || '发送失败，请稍后重试');
         }
     }
 
@@ -427,4 +441,76 @@ class ChatManager {
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
     window.chatManager = new ChatManager();
-}); 
+});
+
+// 打卡功能
+async function checkin() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        alert('请先登录');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: user.id })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            alert(`打卡成功！获得积分：${data.points}\n当前总积分：${data.total_points}`);
+            user.normal_points = data.total_points;
+            localStorage.setItem('user', JSON.stringify(user));
+            window.chatManager.updatePointsDisplay();
+        } else {
+            alert(data.error || '打卡失败');
+        }
+    } catch (error) {
+        alert('打卡失败，请稍后重试');
+    }
+}
+
+// 积分兑换功能
+async function exchangePoints() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        alert('请先登录');
+        return;
+    }
+
+    const amount = prompt('请输入要兑换的基础积分数量（2:1兑换）：');
+    if (!amount || isNaN(amount) || amount <= 0) {
+        alert('请输入有效的积分数量');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/points/exchange', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: user.id,
+                amount: parseInt(amount)
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert('兑换成功！');
+            user.normal_points = data.normal_points;
+            user.premium_points = data.premium_points;
+            localStorage.setItem('user', JSON.stringify(user));
+            window.chatManager.updatePointsDisplay();
+        } else {
+            alert(data.error || '兑换失败');
+        }
+    } catch (error) {
+        alert('兑换失败，请稍后重试');
+    }
+} 

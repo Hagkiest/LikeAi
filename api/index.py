@@ -8,9 +8,19 @@ import re
 import bcrypt
 from datetime import datetime, timedelta, timezone
 import os
+import traceback
+from flask_cors import CORS  # 添加 CORS 支持
 
 app = Flask(__name__, static_folder='..', static_url_path='')
+CORS(app)  # 启用 CORS
 init_db()  # 初始化数据库
+
+# 添加错误处理装饰器
+@app.errorhandler(500)
+def handle_500_error(e):
+    print(f"500 Error: {str(e)}")
+    print(traceback.format_exc())  # 打印完整的错误堆栈
+    return jsonify({'error': '服务器错误', 'details': str(e)}), 500
 
 def decrypt_api_key(encrypted_key):
     decoded = base64.b64decode(encrypted_key).decode('utf-8')
@@ -114,13 +124,17 @@ def register():
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
+        print("Received login request")  # 添加日志
         data = request.json
+        print(f"Request data: {data}")  # 打印请求数据
+
         email = data.get('email')
         password = data.get('password')
 
         if not email or not password:
             return jsonify({'error': '请输入邮箱和密码'}), 400
 
+        print(f"Connecting to database for email: {email}")  # 添加日志
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cur:
@@ -130,6 +144,7 @@ def login():
                     WHERE email = %s
                 """, (email,))
                 user = cur.fetchone()
+                print(f"Database query result: {user}")  # 添加日志
                 
                 if not user:
                     return jsonify({'error': '邮箱或密码错误'}), 400
@@ -137,7 +152,7 @@ def login():
                 if not bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
                     return jsonify({'error': '邮箱或密码错误'}), 400
                 
-                return jsonify({
+                response_data = {
                     'message': '登录成功',
                     'user': {
                         'id': user[0],
@@ -145,13 +160,16 @@ def login():
                         'normal_points': user[3],
                         'premium_points': user[4]
                     }
-                }), 200
+                }
+                print(f"Sending response: {response_data}")  # 添加日志
+                return jsonify(response_data), 200
         finally:
             db_pool.putconn(conn)
 
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({'error': '服务器错误'}), 500
+        print(f"Login error: {str(e)}")  # 添加错误日志
+        print(traceback.format_exc())  # 打印完整的错误堆栈
+        return jsonify({'error': '服务器错误', 'details': str(e)}), 500
 
 # ... 其他 API 路由保持不变 ...
 

@@ -12,7 +12,13 @@ import traceback
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder='..', static_url_path='')
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:5000", "https://your-domain.vercel.app"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Api-Key"]
+    }
+})
 
 # 添加错误处理装饰器
 @app.errorhandler(500)

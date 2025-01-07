@@ -1,5 +1,8 @@
 class ChatManager {
     constructor() {
+        this.apiBase = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : '';
         this.chats = [];
         this.currentChat = null;
         this.loadChats();  // 先加载聊天记录
@@ -349,7 +352,7 @@ class ChatManager {
             // 显示加载动画
             this.showTypingIndicator();
 
-            const response = await fetch('/api/chat', {
+            const response = await fetch(`${this.apiBase}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -423,7 +426,7 @@ class ChatManager {
         const user = JSON.parse(localStorage.getItem('user'));
         if (user) {
             try {
-                const response = await fetch(`/api/user/points?userId=${user.id}`);
+                const response = await fetch(`${this.apiBase}/api/user/points?userId=${user.id}`);
                 if (response.ok) {
                     const data = await response.json();
                     user.normal_points = data.normal_points;
@@ -453,7 +456,7 @@ async function checkin() {
     }
 
     try {
-        const response = await fetch('/api/checkin', {
+        const response = await fetch(`${window.chatManager.apiBase}/api/checkin`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -489,7 +492,7 @@ async function exchangePoints() {
     }
 
     try {
-        const response = await fetch('/api/points/exchange', {
+        const response = await fetch(`${window.chatManager.apiBase}/api/points/exchange`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

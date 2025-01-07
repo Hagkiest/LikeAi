@@ -5,19 +5,6 @@
             "src": "api/index.py",
             "use": "@vercel/python"
         },
-	{
-            "src": "api/__init__.py",
-            "use": "@vercel/python"
-        },
-	{
-            "src": "api/database.py",
-            "use": "@vercel/python"
-        },
-	{
-            "src": "api/send_code.py",
-            "use": "@vercel/python"
-        },
-
         {
             "src": "*.html",
             "use": "@vercel/static"
@@ -34,24 +21,16 @@
     "routes": [
         {
             "src": "/api/(.*)",
-            "dest": "/api/index.py",
+            "dest": "api/index.py",
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        },
+        {
+            "src": "/(login|register|forgot-password)",
+            "dest": "/$1.html"
         },
         {
             "src": "/",
             "dest": "/index.html"
-        },
-        {
-            "src": "/login",
-            "dest": "/login.html"
-        },
-        {
-            "src": "/register",
-            "dest": "/register.html"
-        },
-        {
-            "src": "/forgot-password",
-            "dest": "/forgot-password.html"
         },
         {
             "handle": "filesystem"
@@ -60,5 +39,8 @@
             "src": "/(.*)",
             "dest": "/$1"
         }
-    ]
+    ],
+    "env": {
+        "PYTHONPATH": "."
+    }
 } 
